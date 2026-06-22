@@ -381,7 +381,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 
     <div class="section-h">
       <h2 id="sectionH">🔥 Trending</h2>
-      <small id="sectionSub">Full songs • Audius</small>
+      <small id="sectionSub">30s preview • Deezer + YouTube</small>
     </div>
     <div id="content" class="cards"><div class="empty">Loading...</div></div>
   </div>
@@ -430,7 +430,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h3>🎵 Putar dari YouTube</h3>
-    <p>Paste URL YouTube → play full song. Kalo di Audius ga ketemu original-nya, cari di YouTube: <em>artis - judul (Official Audio)</em></p>
+    <p>Paste URL YouTube → play full song. Atau klik ▶ untuk preview 30s, klik 🎬 untuk full di YouTube: <em>artis - judul (Official Audio)</em></p>
     <input id="urlInput" placeholder="https://www.youtube.com/watch?v=..." />
     <div class="modal-btns">
       <button class="btn btn-ghost" id="modalCancel">Batal</button>
@@ -446,7 +446,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <svg viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#000"/><path d="M48 60v72a18 18 0 1 0 12 16.6V85.5l72-21v57a18 18 0 1 0 12 16.6V42z" fill="#FF4D6D"/></svg>
       <div>
         <h2>Ai Music</h2>
-        <p>Spotify-like music player, full song streaming</p>
+        <p>Spotify-like music player, 30s preview + YouTube full</p>
       </div>
     </div>
 
@@ -456,9 +456,9 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
     </div>
 
-    <div class="about-row"><span class="label">Versi</span><span class="value">v9.7 • 22 Juni 2026</span></div>
+    <div class="about-row"><span class="label">Versi</span><span class="value">v10.0 • 22 Juni 2026</span></div>
     <div class="about-row"><span class="label">Developer</span><span class="value">YANZYAHA</span></div>
-    <div class="about-row"><span class="label">Powered by</span><span class="value">Audius + YouTube</span></div>
+    <div class="about-row"><span class="label">Powered by</span><span class="value">Deezer + YouTube</span></div>
     <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML</span></div>
     <div class="about-row"><span class="label">Hosting</span><span class="value">GitHub Pages</span></div>
     <div class="about-row about-source"><span class="label">Source</span><span class="value"><a class="about-link-sm" href="https://github.com/dafa00000/lho-music" target="_blank">dafa00000/lho-music ↗</a></span></div>
@@ -466,7 +466,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 
     <div class="about-credits">
       <strong>Credits:</strong><br>
-      • <strong>Audius</strong> — decentralized music streaming protocol (full tracks)<br>
+      • <strong>Deezer</strong> — 30s preview streaming (reliable, no auth)<br>
       • <strong>YouTube nocookie</strong> — embed player untuk YouTube fallback<br>
       • <strong>GitHub Pages</strong> — free static hosting + HTTPS<br>
       • <strong>Color palette</strong> — inspired by Apple Music<br>
@@ -508,7 +508,8 @@ window.addEventListener('error', e => {
 
 const $ = id => document.getElementById(id);
 const audio = $('audio');
-const AUDIUS = 'https://discoveryprovider.audius.co';
+const DEEZER = 'https://api.deezer.com';
+const YT_EMBED = 'https://www.youtube-nocookie.com/embed';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtTime = s => { if (!s || isNaN(s)) return '0:00'; s = Math.floor(s); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); };
 
@@ -524,47 +525,105 @@ function toast(msg) {
   toast._t = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+// Show "30s preview" badge in NP area
+let _previewBadgeTimer = null;
+function showPreviewBadge() {
+  let badge = document.getElementById('previewBadge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'previewBadge';
+    badge.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(255,77,109,.95);color:#fff;padding:6px 14px;border-radius:500px;font-size:.75rem;font-weight:600;z-index:200;backdrop-filter:blur(8px)';
+    badge.innerHTML = '▶ Preview 30s — <a id="ytLinkBtn" style="color:#fff;text-decoration:underline;cursor:pointer">play full di YouTube</a>';
+    document.body.appendChild(badge);
+  }
+  badge.style.display = 'block';
+  badge.style.opacity = '0';
+  requestAnimationFrame(() => { badge.style.transition = 'opacity .2s'; badge.style.opacity = '1'; });
+
+  // Hook up the YouTube link button
+  const ytBtn = document.getElementById('ytLinkBtn');
+  if (ytBtn && cur >= 0) {
+    ytBtn.onclick = async () => {
+      const t = playlist[cur];
+      if (!t) return;
+      if (!t._ytId) {
+        toast('🔍 Cari di YouTube...');
+        t._ytId = await searchYouTubeForTrack(t.title, t.artist);
+      }
+      if (t._ytId) {
+        playYouTube(t._ytId, t.title + ' — ' + t.artist);
+      } else {
+        toast('❌ Ga ketemu di YouTube');
+      }
+    };
+  }
+
+  clearTimeout(_previewBadgeTimer);
+  _previewBadgeTimer = setTimeout(() => {
+    badge.style.opacity = '0';
+    setTimeout(() => badge.style.display = 'none', 200);
+  }, 5000);
+}
+
 function bestArt(t) {
-  const a = t.artwork || {};
-  return a['480x480'] || a['150x150'] || a['1000x1000'] || a['1200x1200'] || '';
+  // Deezer cover sizes: cover, cover_small, cover_medium, cover_big, cover_xl
+  return t.album?.cover_xl || t.album?.cover_big || t.album?.cover_medium || t.album?.cover || '';
 }
 
 function norm(t) {
+  // Deezer track format
   return {
-    id: 'audius-' + t.id,
-    title: t.title,
-    artist: t.user?.name || 'Unknown',
-    duration: t.duration || 0,
+    id: 'dz-' + t.id,
+    title: t.title || t.title_short || 'Unknown',
+    artist: t.artist?.name || 'Unknown',
+    album: t.album?.title || '',
+    duration: t.duration || 30,
     art: bestArt(t),
-    playCount: t.play_count || 0,
-    audiusId: t.id,
-    streamUrl: t.stream?.url || null,
-    isStreamable: t.is_streamable !== false && t.is_available !== false,
+    preview: t.preview || null,
+    deezerId: t.id,
+    deezerLink: t.link || null,
+    isStreamable: !!t.preview,
   };
 }
 
-async function audiusSearch(query, limit = 50) {
-  const r = await fetch(`${AUDIUS}/v1/tracks/search?query=${encodeURIComponent(query)}&limit=${limit}&app_name=aimusic`);
+async function deezerSearch(query, limit = 30) {
+  const r = await fetch(`${DEEZER}/search?q=${encodeURIComponent(query)}&limit=${limit}`);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const data = await r.json();
   return (data.data || []).map(norm);
 }
 
-async function audiusTrending(genre, limit = 50) {
-  let url;
-  if (genre) {
-    url = `${AUDIUS}/v1/tracks/trending?genre=${encodeURIComponent(genre)}&limit=${limit}&app_name=aimusic`;
-  } else {
-    url = `${AUDIUS}/v1/tracks/trending?limit=${limit}&app_name=aimusic`;
+async function deezerChart(limit = 30) {
+  const r = await fetch(`${DEEZER}/chart?limit=${limit}`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.json();
+  // Deezer chart returns tracks.data, albums.data, artists.data, playlists.data
+  return (data.tracks?.data || []).map(norm);
+}
+
+async function deezerGenre(genreId, limit = 30) {
+  // Deezer genre IDs: 0=all, 132=pop, 116=rap, 106=electronic, 466=fitness, 152=lofi
+  const r = await fetch(`${DEEZER}/chart/${genreId}/tracks?limit=${limit}`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.json();
+  return (data.data || []).map(norm);
+}
+
+// Search YouTube by scraping search page (fallback when Deezer doesn't have full song)
+async function searchYouTubeForTrack(title, artist) {
+  const q = encodeURIComponent(`${title} ${artist}`);
+  try {
+    const r = await fetch(`https://www.youtube.com/results?search_query=${q}`, {
+      headers: { 'Accept-Language': 'en-US' }
+    });
+    if (!r.ok) return null;
+    const html = await r.text();
+    // Extract first videoId from ytInitialData JSON
+    const m = html.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
+    return m ? m[1] : null;
+  } catch (e) {
+    return null;
   }
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  const data = await r.json();
-  return (data.data || []).map(norm);
-}
-
-function getStreamUrl(audiusId) {
-  return `${AUDIUS}/v1/tracks/${audiusId}/stream?app_name=aimusic`;
 }
 
 function getYouTubeId(url) {
@@ -618,7 +677,7 @@ async function doSearch() {
   $('content').innerHTML = '<div class="empty">Mencari di Audius...</div>';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   try {
-    const tracks = await audiusSearch(q);
+    const tracks = await deezerSearch(q);
     currentList = tracks;
     if (tracks.length) renderList(tracks);
     else $('content').innerHTML = '<div class="empty"><h3>Tidak ada di Audius</h3><small>Untuk lagu mainstream original, paste URL YouTube (klik icon 📋)</small></div>';
@@ -628,14 +687,14 @@ async function doSearch() {
 }
 
 async function playTrack(track) {
+  // Redirect to new playTrackV7
+  return playTrackV7(track);
+  // (legacy code below kept for reference, but never reached)
+  if (false) {
   if (!track) return;
   // Close YT overlay if open
   $('ytMini').classList.remove('show');
   $('ytFrame').src = '';
-
-  // Get stream URL (pre-signed from API, or construct fallback)
-  const streamUrl = track.streamUrl || getStreamUrl(track.audiusId);
-  if (!streamUrl) { toast('Track tidak bisa diputar'); return; }
 
   // Check if non-streamable
   if (track.isStreamable === false) {
@@ -1030,59 +1089,31 @@ async function renderDownloadsTab() {
 async function downloadTrack(track) {
   if (!track) { toast('Track ga valid'); return; }
 
-  // Skip if already downloaded (check by stored blob)
-  if (track.id && track.id.startsWith('audius-')) {
+  // Skip if already downloaded
+  if (track.id && track.id.startsWith('dz-')) {
     const existing = await dlGet(track.id);
     if (existing?._blob) { toast('Sudah offline ✓'); return; }
   }
 
-  // Need audiusId to look up the track
-  let audiusId = track.audiusId;
-  if (!audiusId && track.id && track.id.startsWith('audius-')) {
-    audiusId = track.id.replace('audius-', '');
-  }
-  if (!audiusId) {
-    console.error('No audiusId on track:', track);
-    toast('❌ Track tidak punya ID Audius');
+  // Need preview URL to download
+  let preview = track.preview;
+  if (!preview) {
+    toast('❌ Track tidak punya preview URL');
     return;
   }
 
-  toast('⬇️ Mendownload...');
+  toast('⬇️ Mendownload preview 30s...');
   try {
-    // Step 1: Get fresh track metadata with stream URL
-    const metaR = await fetch(`${AUDIUS}/v1/tracks/${audiusId}?app_name=aimusic`);
-    if (!metaR.ok) throw new Error('API ' + metaR.status);
-    const meta = await metaR.json();
-    const t = meta.data;
-    if (!t) throw new Error('Track ga ketemu di Audius');
+    const r = await fetch(preview);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    if (blob.size < 1000) throw new Error('File terlalu kecil (' + blob.size + 'B)');
 
-    // Check if streamable
-    if (t.is_streamable === false || t.is_available === false) {
-      throw new Error('Track tidak tersedia untuk streaming');
-    }
-
-    // Step 2: Get the actual stream URL from API response
-    let streamUrl = t.stream?.url;
-    if (!streamUrl) throw new Error('API ga kasih stream URL');
-
-    // Step 3: Fetch the actual audio
-    const audioR = await fetch(streamUrl);
-    if (!audioR.ok) throw new Error('Stream HTTP ' + audioR.status);
-    const blob = await audioR.blob();
-    if (blob.size < 1000) throw new Error('File terlalu kecil (' + blob.size + 'B), stream rusak');
-
-    // Step 4: Save BLOB persistently
     const data = {
       ...track,
-      audiusId,
-      title: track.title || t.title || 'Unknown',
-      artist: track.artist || t.user?.name || 'Unknown',
-      art: track.art || bestArt(t),
-      duration: track.duration || t.duration || 0,
       _blob: blob,
       _size: blob.size,
       _type: blob.type || 'audio/mpeg',
-      _streamUrl: streamUrl,
       _downloadedAt: Date.now(),
     };
     await dlSave(data);
@@ -1166,7 +1197,7 @@ async function loadHome() {
   });
 
   // Load all sections in PARALLEL
-  const results = await Promise.allSettled(sections.map(s => audiusTrending(s.query, 10)));
+  const results = await Promise.allSettled(sections.map(s => deezerChart(10)));
 
   let totalCatalog = 0;
   results.forEach((r, i) => {
@@ -1213,18 +1244,18 @@ async function loadTab(tab) {
   const labels = {trending:'🔥 Trending',electronic:'🎛️ Electronic',lofi:'🎧 Lo-fi',chill:'🌙 Chill',hiphop:'🎤 Hip-hop',pop:'🎵 Pop',rock:'🎸 Rock'};
   const genres = {trending:null,electronic:'Electronic',lofi:'Lo-Fi',chill:'Chill',hiphop:'Hip-Hop/Rap',pop:'Pop',rock:'Rock'};
   $('sectionH').textContent = labels[tab] || 'Hasil';
-  $('sectionSub').textContent = 'Full songs • Audius';
+  $('sectionSub').textContent = '30s preview • Deezer + YouTube';
   document.querySelector('.section-h')?.classList.remove('hidden');
   syncBottomNav('home'); // genre tabs treat as "home" category
   $('content').innerHTML = '<div class="empty"><div class="skeleton" style="height:160px;margin:12px 0"></div><div class="skeleton" style="height:160px;margin:12px 0"></div><div class="skeleton" style="height:160px;margin:12px 0"></div></div>';
   try {
     let tracks;
     if (tab === 'trending') {
-      tracks = await audiusTrending();
+      tracks = await deezerChart();
     } else if (genres[tab]) {
-      tracks = await audiusTrending(genres[tab]);
+      tracks = await deezerChart();
     } else {
-      tracks = await audiusTrending(null);
+      tracks = await deezerChart();
     }
     currentList = tracks;
     renderCards(tracks);
@@ -1233,75 +1264,58 @@ async function loadTab(tab) {
   }
 }
 
-// Updated playTrack: use offline blob if available, fresh API lookup for stream URL
+// Play track: try offline blob, then Deezer preview, then YouTube embed
 async function playTrackV7(track) {
   if (!track) return;
-  // Close YT overlay
+  // Close YT overlay first
   $('ytMini').classList.remove('show');
   $('ytFrame').src = '';
 
-  let streamUrl = null;
-
-  // 1. Try offline blob first (persistent across refreshes)
-  if (track.id && track.id.startsWith('audius-')) {
-    const offline = await dlGet(track.id);
-    if (offline?._blob) {
-      streamUrl = URL.createObjectURL(offline._blob);
-      console.log('Playing offline blob (' + Math.round((offline._size||0)/1024) + 'KB)');
-    }
-  }
-
-  // 2. Need audiusId for API lookup
-  let audiusId = track.audiusId;
-  if (!audiusId && track.id && track.id.startsWith('audius-')) {
-    audiusId = track.id.replace('audius-', '');
-  }
-
-  // 3. If no offline, fetch fresh stream URL from API
-  if (!streamUrl && audiusId) {
+  // ===== 1. Try offline blob first (persistent across refreshes) =====
+  if (track.id && track.id.startsWith('dz-')) {
     try {
-      const r = await fetch(`${AUDIUS}/v1/tracks/${audiusId}?app_name=aimusic`);
-      if (r.ok) {
-        const data = await r.json();
-        const t = data.data;
-        if (t && t.stream?.url) {
-          streamUrl = t.stream.url;
-          track.streamUrl = streamUrl;
-          track._streamFetchedAt = Date.now();
-          // Update fields from API
-          track.title = track.title || t.title || 'Unknown';
-          track.artist = track.artist || t.user?.name || 'Unknown';
-          track.art = track.art || bestArt(t);
-          track.duration = track.duration || t.duration || 0;
-        }
-        if (t?.is_streamable === false || t?.is_available === false) {
-          toast('Track tidak tersedia untuk streaming');
-          skipToNext();
-          return;
-        }
+      const offline = await dlGet(track.id);
+      if (offline?._blob) {
+        audio.src = URL.createObjectURL(offline._blob);
+        console.log('Playing offline blob (' + Math.round((offline._size||0)/1024) + 'KB)');
+        try { await audio.play(); }
+        catch (e) { toast('Tap tombol play untuk mulai'); }
+        return;
       }
+    } catch (e) { /* IDB issue, continue */ }
+  }
+
+  // ===== 2. Use Deezer preview URL (30s, reliable, CORS-enabled) =====
+  if (track.preview) {
+    audio.src = track.preview;
+    console.log('Playing Deezer preview (30s):', track.title);
+    try {
+      await audio.play();
+      // Update UI to show "30s preview"
+      showPreviewBadge();
+      return;
     } catch (e) {
-      console.warn('API lookup failed:', e.message);
+      console.warn('Preview play failed:', e.message);
     }
   }
 
-  // 4. Fallback: use cached streamUrl if API failed
-  if (!streamUrl) streamUrl = track.streamUrl;
-
-  // 5. Last resort: NO getStreamUrl() — that returns a redirect endpoint, not a stream URL
-  if (!streamUrl) {
-    console.error('No stream URL for track:', track);
-    toast('❌ Track tidak bisa diputar (ga ada stream URL)');
+  // ===== 3. Fallback: YouTube embed (full song) =====
+  if (!track._ytId) {
+    toast('🔍 Cari di YouTube...');
+    const ytId = await searchYouTubeForTrack(track.title, track.artist);
+    if (ytId) {
+      track._ytId = ytId;
+      playYouTube(ytId, `${track.title} — ${track.artist}`);
+      return;
+    }
+  } else {
+    playYouTube(track._ytId, `${track.title} — ${track.artist}`);
     return;
   }
 
-  audio.src = streamUrl;
-
-  try {
-    await audio.play();
-  } catch (e) {
-    console.error('Audio play failed:', e);
-    toast('Gagal play - coba lagi');
+  // ===== 4. Nothing worked =====
+  console.error('Cannot play track:', track);
+  toast('❌ Tidak bisa diputar');
     return;
   }
 
@@ -1559,10 +1573,10 @@ if ('serviceWorker' in navigator) {
       // Network-first for everything (always get fresh HTML)
       if (e.request.method !== 'GET') return;
       const url = new URL(e.request.url);
-      if (url.hostname.includes('audius') || url.hostname.includes('youtube')) return; // don't cache streams
+      if (url.hostname.includes('deezer') || url.hostname.includes('ytimg') || url.hostname.includes('youtube')) return; // don't cache streams
       e.respondWith(fetch(e.request).then(res => {
         const clone = res.clone();
-        caches.open('aimusic-v97').then(c => c.put(e.request, clone));
+        caches.open('aimusic-v100').then(c => c.put(e.request, clone));
         return res;
       }).catch(() => caches.match(e.request)));
     });
@@ -1590,7 +1604,7 @@ updateDlCount();
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:10px 18px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✓ Updated to v9.7 — robust IDB + self-heal! — About page fixed + GitHub button!';
+    b.innerHTML = '✓ Updated to v10.0 — Deezer + YouTube! — About page fixed + GitHub button!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
