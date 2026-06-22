@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- v9.0-spotify-bottom-nav -->
+<!-- v9.4-about-fix -->
 <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Ai Music","short_name":"Ai","start_url":"./?v=7","display":"standalone","background_color":"%23000","theme_color":"%23FF4D6D","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2040%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M48%2060v72a18%2018%200%201%200%2012%2016.6V85.5l72-21v57a18%2018%200%201%200%2012%2016.6V42z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22100%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M128%20160v192a48%2048%200%201%200%2032%2044.3V228l192-56v152a48%2048%200%201%200%2032%2044.3V112z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
 <style>
 :root{--accent:#FF4D6D;--bg:#000;--bg2:#121212;--bg3:#1a1a1a;--bg4:#262626;--border:#282828;--text:#fff;--text2:#b3b3b3;--text3:#777}
@@ -61,7 +61,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 @media(max-width:640px){.cards{grid-template-columns:repeat(2,1fr);gap:12px}}
 .card{background:var(--bg3);border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .card:hover{background:var(--bg4);transform:translateY(-2px)}
-.card-art{width:100%;aspect-ratio:1;border-radius:8px;background:#222;margin-bottom:10px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.card-art{width:100%;aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);margin-bottom:10px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .card-name{font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .card-artist{color:var(--text2);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-play{position:absolute;bottom:54px;right:14px;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;border:0;font-size:.9rem;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(8px);transition:all .2s;box-shadow:0 6px 16px rgba(0,0,0,.5);cursor:pointer}
@@ -83,7 +83,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .row.playing .num,.row.playing .name{color:var(--accent)}
 @media(max-width:640px){.list-head,.row{grid-template-columns:32px 1fr 50px;gap:10px}.list-head .col-alb,.row .artist,.list-head .col-dur,.row .dur{display:none}}
 
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:10000;padding:20px}
 .modal-bg.show{display:flex}
 .modal{background:var(--bg2);border-radius:16px;padding:22px;max-width:480px;width:100%;border:1px solid var(--border)}
 .modal h3{margin-bottom:6px;font-size:1.05rem}
@@ -109,7 +109,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .player::before{content:'';position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
 @media(max-width:640px){.player{grid-template-columns:1fr 1fr;gap:8px;padding:6px 8px 8px}}
 .np{display:flex;align-items:center;gap:10px;min-width:0;padding:4px;border-radius:8px}
-.np-art{width:44px;height:44px;border-radius:6px;background:#222;object-fit:cover;flex-shrink:0}
+.np-art{width:44px;height:44px;border-radius:6px;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);object-fit:cover;flex-shrink:0}
 .np-info{min-width:0;flex:1}
 .np-title{font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .np-artist{color:var(--text2);font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -228,6 +228,11 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .about-credits strong{color:var(--text2);font-weight:600}
 .about-link{color:var(--accent);text-decoration:none}
 .about-link:hover{text-decoration:underline}
+.about-source .value{max-width:55%}
+.about-link-sm{color:var(--accent);text-decoration:none;font-size:.78rem;font-weight:600;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(255,77,109,.1);border-radius:6px;transition:all .15s}
+.about-link-sm:hover{background:rgba(255,77,109,.2);text-decoration:none}
+.about-gh-btn{display:block;margin:14px auto 4px;padding:10px 18px;background:var(--accent);color:#fff;text-decoration:none;border-radius:10px;font-size:.82rem;font-weight:600;text-align:center;transition:all .15s;box-shadow:0 2px 8px rgba(255,77,109,.3)}
+.about-gh-btn:hover{background:#ff5d7a;transform:translateY(-1px);text-decoration:none}
 
 /* Volume slider */
 .vol-wrap{display:flex;align-items:center;gap:6px}
@@ -330,7 +335,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
   <div class="topbar">
     <div class="logo">
       <svg viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#000"/><path d="M48 60v72a18 18 0 1 0 12 16.6V85.5l72-21v57a18 18 0 1 0 12 16.6V42z" fill="#FF4D6D"/></svg>
-      <span>Ai Music <small style="font-size:.55rem;color:#4ade80;font-weight:700;margin-left:6px;background:rgba(74,222,128,.1);padding:2px 6px;border-radius:8px">v9.1</small></span>
+      <span>Ai Music <small style="font-size:.55rem;color:#4ade80;font-weight:700;margin-left:6px;background:rgba(74,222,128,.1);padding:2px 6px;border-radius:8px">v9.4</small></span>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a8 8 0 1 1 5.3-2L21 21.4 19.4 23l-5.7-5.7A8 8 0 0 1 10 18zm0-2a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"/></svg>
@@ -463,12 +468,13 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
     </div>
 
-    <div class="about-row"><span class="label">Versi</span><span class="value">v7.0 • 22 Juni 2026</span></div>
-    <div class="about-row"><span class="label">Developer</span><span class="value">dafa00000</span></div>
+    <div class="about-row"><span class="label">Versi</span><span class="value">v9.4</span></div>
+    <div class="about-row"><span class="label">Developer</span><span class="value">YANZYAHA</span></div>
     <div class="about-row"><span class="label">Powered by</span><span class="value">Audius + YouTube</span></div>
-    <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML • 30KB</span></div>
+    <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML</span></div>
     <div class="about-row"><span class="label">Hosting</span><span class="value">GitHub Pages</span></div>
-    <div class="about-row"><span class="label">Source</span><span class="value"><a class="about-link" href="https://github.com/dafa00000/lho-music" target="_blank">github.com/dafa00000/lho-music ↗</a></span></div>
+    <div class="about-row about-source"><span class="label">Source</span><span class="value"><a class="about-link-sm" href="https://github.com/dafa00000/lho-music" target="_blank">dafa00000/lho-music ↗</a></span></div>
+    <a class="about-gh-btn" href="https://github.com/dafa00000/lho-music" target="_blank">⭐ Star on GitHub</a>
 
     <div class="about-credits">
       <strong>Credits:</strong><br>
@@ -1476,7 +1482,7 @@ if ('serviceWorker' in navigator) {
       if (url.hostname.includes('audius') || url.hostname.includes('youtube')) return; // don't cache streams
       e.respondWith(fetch(e.request).then(res => {
         const clone = res.clone();
-        caches.open('aimusic-v91').then(c => c.put(e.request, clone));
+        caches.open('aimusic-v94').then(c => c.put(e.request, clone));
         return res;
       }).catch(() => caches.match(e.request)));
     });
@@ -1504,7 +1510,7 @@ updateDlCount();
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:10px 18px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✓ Updated to v9.1 — Bottom navigation ready!';
+    b.innerHTML = '✓ Updated to v9.4 — About page fixed + GitHub button!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
