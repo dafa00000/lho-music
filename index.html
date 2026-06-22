@@ -132,6 +132,91 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .empty{text-align:center;color:var(--text3);padding:60px 20px}
 .empty h3{color:#fff;font-size:1.1rem;margin-bottom:6px}
 .empty small{display:block;margin-top:8px;color:var(--text3);font-size:.75rem;line-height:1.5}
+
+/* === v7 ANIMATIONS === */
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 6px 20px rgba(0,0,0,.3)}50%{transform:scale(1.06);box-shadow:0 8px 28px rgba(255,77,109,.4)}}
+.hero-play.playing{animation:pulse 1.6s ease-in-out infinite;background:#fff!important}
+.ctrls .play-main.playing{animation:pulse 1.6s ease-in-out infinite}
+
+@keyframes eq{0%,100%{height:20%}50%{height:100%}}
+.eq{display:inline-flex;align-items:flex-end;gap:3px;width:18px;height:18px;vertical-align:middle}
+.eq i{display:block;width:3px;background:var(--accent);border-radius:1px;height:20%;animation:eq 1s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.2s}
+.eq i:nth-child(3){animation-delay:.4s}
+.eq i:nth-child(4){animation-delay:.1s}
+.eq.paused i{animation-play-state:paused}
+.eq.small{width:14px;height:14px;gap:2px}
+.eq.small i{width:2px}
+
+/* Skeleton shimmer */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skeleton{background:linear-gradient(90deg,var(--bg3) 0%,var(--bg4) 50%,var(--bg3) 100%);background-size:400px 100%;animation:shimmer 1.4s infinite;border-radius:6px}
+
+/* Toast slide */
+.toast.show{opacity:1;animation:toastIn .25s ease}
+@keyframes toastIn{from{transform:translateX(-50%) translateY(-8px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+
+/* Card equalizer overlay */
+.card.playing::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,77,109,.15),transparent);pointer-events:none;border-radius:12px}
+.card.playing .card-play{opacity:1;transform:translateY(0);background:var(--accent)}
+
+/* Smooth fade page transitions */
+.main{animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Row playing state enhanced */
+.row.playing{background:rgba(255,77,109,.1);border-left:3px solid var(--accent);padding-left:9px}
+.row.playing .num{color:var(--accent);font-weight:700}
+.row.playing .name{color:var(--accent);font-weight:700}
+
+/* === v7 NEW UI === */
+.topbar-actions{display:flex;align-items:center;gap:4px;margin-left:auto}
+
+.tab-count{background:rgba(255,255,255,.15);color:#fff;font-size:.65rem;padding:1px 6px;border-radius:10px;margin-left:6px;font-weight:700}
+.tab.active .tab-count{background:rgba(0,0,0,.2);color:#fff}
+
+.playlist-empty{text-align:center;padding:80px 20px;color:var(--text3)}
+.playlist-empty .big-icon{font-size:3rem;margin-bottom:12px;opacity:.5}
+.playlist-empty h3{color:#fff;margin-bottom:8px}
+
+.row .row-act{background:transparent;border:0;color:var(--text3);font-size:.9rem;cursor:pointer;padding:4px;border-radius:50%;transition:all .15s}
+.row .row-act:hover{color:var(--accent);background:rgba(255,255,109,.1)}
+.row .row-act.active{color:var(--accent)}
+.row .pl-drag{cursor:grab;color:var(--text3);font-size:.9rem;padding:0 4px;user-select:none}
+
+/* Download status pill */
+.dl-status{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.7);color:#fff;padding:3px 8px;border-radius:8px;font-size:.65rem;font-weight:600;backdrop-filter:blur(8px);display:flex;align-items:center;gap:4px}
+.dl-status.done{color:#4ade80}
+.dl-status.loading{color:#fbbf24}
+
+/* About modal bigger */
+.modal.about{max-width:540px}
+.modal.about h3{font-size:1.4rem;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.about-logo{display:flex;align-items:center;gap:14px;padding:16px;background:linear-gradient(135deg,rgba(255,77,109,.1),rgba(255,143,163,.05));border-radius:14px;margin-bottom:18px;border:1px solid rgba(255,77,109,.2)}
+.about-logo svg{width:48px;height:48px;flex-shrink:0}
+.about-logo h2{margin:0;font-size:1.3rem}
+.about-logo p{margin:0;color:var(--text2);font-size:.75rem;margin-top:2px}
+.about-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.about-row:last-child{border-bottom:0}
+.about-row .label{color:var(--text2)}
+.about-row .value{color:#fff;font-weight:500;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.about-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;padding:14px;background:var(--bg3);border-radius:12px;text-align:center}
+.about-stat .num{font-size:1.5rem;font-weight:800;color:var(--accent);display:block}
+.about-stat .lbl{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:2px}
+.about-credits{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text3);line-height:1.6}
+.about-credits strong{color:var(--text2);font-weight:600}
+.about-link{color:var(--accent);text-decoration:none}
+.about-link:hover{text-decoration:underline}
+
+/* Volume slider */
+.vol-wrap{display:flex;align-items:center;gap:6px}
+.vol-slider{-webkit-appearance:none;appearance:none;width:80px;height:4px;background:#4d4d4d;border-radius:2px;outline:none;cursor:pointer}
+.vol-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;background:#fff;border-radius:50%;cursor:pointer}
+.vol-slider::-moz-range-thumb{width:12px;height:12px;background:#fff;border-radius:50%;cursor:pointer;border:0}
+
+/* Spinning refresh */
+@keyframes spin{to{transform:rotate(360deg)}}
+.refresh-btn.loading svg{animation:spin 1s linear infinite}
 </style>
 </head>
 <body>
@@ -145,7 +230,13 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a8 8 0 1 1 5.3-2L21 21.4 19.4 23l-5.7-5.7A8 8 0 0 1 10 18zm0-2a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"/></svg>
       <input id="q" class="search-input" placeholder="Cari lagu atau artis..." />
     </div>
-    <button class="icon-btn" id="pasteBtn" title="Paste URL YouTube">📋</button>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="pasteBtn" title="Paste URL YouTube">📋</button>
+      <button class="icon-btn" id="refreshBtn" title="Refresh">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A8 8 0 1 0 19.73 14h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
+      <button class="icon-btn" id="aboutBtn" title="Tentang">ℹ</button>
+    </div>
   </div>
 
   <div class="main">
@@ -169,11 +260,13 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <button class="tab" data-tab="hiphop">🎤 Hip-hop</button>
       <button class="tab" data-tab="pop">🎵 Pop</button>
       <button class="tab" data-tab="rock">🎸 Rock</button>
+      <button class="tab" data-tab="playlist">📋 Playlist<span class="tab-count" id="plCount">0</span></button>
+      <button class="tab" data-tab="downloads">⬇️ Offline<span class="tab-count" id="dlCount">0</span></button>
     </div>
 
     <div class="section-h">
       <h2 id="sectionH">🔥 Trending</h2>
-      <small>Full songs • Audius</small>
+      <small id="sectionSub">Full songs • Audius</small>
     </div>
     <div id="content" class="cards"><div class="empty">Loading...</div></div>
   </div>
@@ -185,12 +278,15 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
         <div class="np-title" id="npTitle">—</div>
         <div class="np-artist" id="npArtist">Pilih lagu</div>
       </div>
+      <button class="icon-btn" id="npAddBtn" title="Tambah ke Playlist" style="display:none">+</button>
     </div>
     <div class="center">
       <div class="ctrls">
+        <button id="shuffleBtn" title="Shuffle">🔀</button>
         <button id="prevBtn" title="Sebelumnya">⏮</button>
         <button id="playBtn" class="play-main" title="Putar/Jeda">▶</button>
         <button id="nextBtn" title="Berikutnya">⏭</button>
+        <button id="repeatBtn" title="Repeat">🔁</button>
       </div>
       <div class="progress-wrap">
         <span id="curTime">0:00</span>
@@ -199,7 +295,11 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       </div>
     </div>
     <div class="right">
-      <button class="icon-btn" id="pasteBtn2" title="Paste URL YouTube">▶️ YT</button>
+      <div class="vol-wrap">
+        <span id="volIcon" style="font-size:.85rem">🔊</span>
+        <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="80">
+      </div>
+      <button class="icon-btn" id="dlBtn" title="Download offline" style="display:none">⬇</button>
     </div>
   </div>
 </div>
@@ -212,6 +312,49 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
     <div class="modal-btns">
       <button class="btn btn-ghost" id="modalCancel">Batal</button>
       <button class="btn btn-primary" id="modalOk">▶ Putar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="aboutModal">
+  <div class="modal about">
+    <h3>🎵 Ai Music</h3>
+    <div class="about-logo">
+      <svg viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#000"/><path d="M48 60v72a18 18 0 1 0 12 16.6V85.5l72-21v57a18 18 0 1 0 12 16.6V42z" fill="#FF4D6D"/></svg>
+      <div>
+        <h2>Ai Music</h2>
+        <p>Spotify-like music player, full song streaming</p>
+      </div>
+    </div>
+
+    <div class="about-stats">
+      <div class="about-stat"><span class="num" id="statSongs">0</span><span class="lbl">Playlist</span></div>
+      <div class="about-stat"><span class="num" id="statPlayed">0</span><span class="lbl">Diputar</span></div>
+      <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
+    </div>
+
+    <div class="about-row"><span class="label">Versi</span><span class="value">v7.0 • 22 Juni 2026</span></div>
+    <div class="about-row"><span class="label">Developer</span><span class="value">dafa00000</span></div>
+    <div class="about-row"><span class="label">Powered by</span><span class="value">Audius + YouTube</span></div>
+    <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML • 30KB</span></div>
+    <div class="about-row"><span class="label">Hosting</span><span class="value">GitHub Pages</span></div>
+    <div class="about-row"><span class="label">Source</span><span class="value"><a class="about-link" href="https://github.com/dafa00000/lho-music" target="_blank">github.com/dafa00000/lho-music ↗</a></span></div>
+
+    <div class="about-credits">
+      <strong>Credits:</strong><br>
+      • <strong>Audius</strong> — decentralized music streaming protocol (full tracks)<br>
+      • <strong>YouTube nocookie</strong> — embed player untuk YouTube fallback<br>
+      • <strong>GitHub Pages</strong> — free static hosting + HTTPS<br>
+      • <strong>Color palette</strong> — inspired by Apple Music<br>
+      <br>
+      <strong>Privacy:</strong> Semua data (playlist, history, downloads) disimpan lokal di browser lo (localStorage + IndexedDB). Ga ada server backend, ga ada tracking, ga ada login.<br>
+      <br>
+      Dibuat sebagai eksperimen PWA single-file HTML. Kalo ada bug atau request fitur → kabarin aja.
+    </div>
+
+    <div class="modal-btns" style="margin-top:16px">
+      <button class="btn btn-ghost" id="aboutClose">Tutup</button>
+      <button class="btn btn-primary" id="clearDataBtn" style="background:#dc2626">🗑️ Clear All Data</button>
     </div>
   </div>
 </div>
@@ -526,6 +669,470 @@ $('modalOk').onclick = () => {
   hideModal();
 };
 $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('modalOk').click(); });
+
+/* ========== v7: PLAYLIST + DOWNLOADS + MEDIASESSION + SW ========== */
+
+// Persistent storage
+const LS = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem('aimusic_' + k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('aimusic_' + k, JSON.stringify(v)); } catch {} },
+};
+let shuffleOn = LS.get('shuffle', false);
+let repeatOn = LS.get('repeat', false);
+let playCount = LS.get('playCount', 0);
+let shuffleOrder = [];
+
+// IndexedDB for offline downloads
+const DB_NAME = 'aimusic_dl';
+const DB_STORE = 'tracks';
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE, { keyPath: 'id' });
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function dlSave(track) {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(track);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function dlGet(id) {
+  const db = await openDB();
+  return new Promise((res) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(id);
+    req.onsuccess = () => res(req.result || null);
+    req.onerror = () => res(null);
+  });
+}
+async function dlDelete(id) {
+  const db = await openDB();
+  return new Promise((res) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(id);
+    tx.oncomplete = () => res();
+  });
+}
+async function dlList() {
+  const db = await openDB();
+  return new Promise((res) => {
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror = () => res([]);
+  });
+}
+async function updateDlCount() {
+  const list = await dlList();
+  $('dlCount').textContent = list.length;
+  $('statOffline').textContent = list.length;
+}
+
+// Stats updates
+function updateStats() {
+  $('plCount').textContent = playlist.length;
+  $('statSongs').textContent = playlist.length;
+  $('statPlayed').textContent = playCount;
+}
+
+// Equalizer HTML helper
+function eqHTML(small) {
+  return `<span class="eq${small ? ' small' : ''}${audio.paused ? ' paused' : ''}"><i></i><i></i><i></i><i></i></span>`;
+}
+
+// MediaSession API for lock screen / background controls
+function setupMediaSession(track) {
+  if (!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: track.title || 'Unknown',
+    artist: track.artist || 'Unknown',
+    album: track.album || 'Ai Music',
+    artwork: track.art ? [
+      { src: track.art, sizes: '512x512', type: 'image/jpeg' },
+    ] : [],
+  });
+  navigator.mediaSession.setActionHandler('play', () => audio.play());
+  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  navigator.mediaSession.setActionHandler('previoustrack', () => $('prevBtn').click());
+  navigator.mediaSession.setActionHandler('nexttrack', () => $('nextBtn').click());
+  navigator.mediaSession.setActionHandler('seekbackward', (e) => { audio.currentTime = Math.max(0, audio.currentTime - (e.seekOffset || 10)); });
+  navigator.mediaSession.setActionHandler('seekforward', (e) => { audio.currentTime = Math.min(audio.duration, audio.currentTime + (e.seekOffset || 10)); });
+  navigator.mediaSession.setActionHandler('seekto', (e) => { if (e.fastSeek && 'fastSeek' in audio) audio.fastSeek(e.seekTime); else audio.currentTime = e.seekTime; });
+  navigator.mediaSession.setActionHandler('stop', () => { audio.pause(); audio.currentTime = 0; });
+}
+
+// Render card with playing state
+function renderCards(tracks) {
+  if (!tracks.length) { $('content').className = ''; $('content').innerHTML = '<div class="empty"><h3>Tidak ada hasil</h3><small>Coba kata kunci lain, atau paste URL YouTube untuk lagu mainstream</small></div>'; return; }
+  $('content').className = 'cards';
+  $('content').innerHTML = tracks.map(t => {
+    const isPlaying = cur >= 0 && playlist[cur]?.id === t.id && !audio.paused;
+    return `
+    <div class="card${isPlaying ? ' playing' : ''}" data-id="${t.id}">
+      ${isPlaying ? '<div style="position:absolute;top:14px;right:14px;z-index:2">' + eqHTML(true) + '</div>' : (t.duration ? `<div class="card-dur">${fmtTime(t.duration)}</div>` : '')}
+      <img class="card-art" src="${t.art || ''}" alt="" loading="lazy" onerror="this.style.background='#333'">
+      <div class="card-name">${esc(t.title)}</div>
+      <div class="card-artist">${esc(t.artist)}</div>
+      <button class="card-play" data-act="play" data-id="${t.id}">${isPlaying ? '⏸' : '▶'}</button>
+    </div>`;
+  }).join('');
+}
+
+// Render row with playlist actions
+function renderList(tracks, opts = {}) {
+  if (!tracks.length) {
+    const isPl = opts.playlist && playlist.length === 0;
+    if (isPl) {
+      $('content').className = '';
+      $('content').innerHTML = '<div class="playlist-empty"><div class="big-icon">📋</div><h3>Playlist kosong</h3><small>Tap ikon + di bottom player atau di tiap lagu untuk nambahin</small></div>';
+      return;
+    }
+    $('content').className = '';
+    $('content').innerHTML = '<div class="empty"><h3>Tidak ada hasil</h3><small>Coba kata kunci lain</small></div>';
+    return;
+  }
+  $('content').className = 'list';
+  $('content').innerHTML = `<div class="list-head"><div class="col-num">#</div><div>Judul</div><div class="col-alb">Artis</div><div class="col-dur">⏱</div><div></div></div>` +
+    tracks.map((t, i) => {
+      const isPlaying = cur >= 0 && playlist[cur]?.id === t.id && !audio.paused;
+      const inPl = playlist.some(p => p.id === t.id);
+      return `
+      <div class="row${isPlaying ? ' playing' : ''}" data-id="${t.id}">
+        <div class="num">${isPlaying ? eqHTML(true) : (i+1)}</div>
+        <div class="name">${esc(t.title)}</div>
+        <div class="artist">${esc(t.artist)}</div>
+        <div class="dur">${fmtTime(t.duration)}</div>
+        <div style="display:flex;gap:2px;justify-content:flex-end">
+          ${opts.playlist ? `<button class="row-act" data-act="plRemove" data-id="${t.id}" title="Hapus dari playlist">✕</button>` : `<button class="row-act${inPl ? ' active' : ''}" data-act="plAdd" data-id="${t.id}" title="Tambah ke playlist">${inPl ? '✓' : '+'}</button>`}
+          <button class="play-btn" data-act="play" data-id="${t.id}" title="Putar">${isPlaying ? '⏸' : '▶'}</button>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// Add to playlist
+async function addToPlaylist(track) {
+  if (playlist.find(p => p.id === track.id)) {
+    toast('Sudah ada di playlist');
+    return;
+  }
+  playlist.push(track);
+  LS.set('playlist', playlist);
+  updateStats();
+  toast(`✓ Ditambahin: ${track.title.slice(0, 30)}...`);
+}
+async function removeFromPlaylist(id) {
+  const idx = playlist.findIndex(p => p.id === id);
+  if (idx >= 0) playlist.splice(idx, 1);
+  LS.set('playlist', playlist);
+  updateStats();
+  if ($('content').classList.contains('list')) renderPlaylistTab();
+}
+function renderPlaylistTab() {
+  $('sectionH').textContent = `📋 My Playlist (${playlist.length})`;
+  $('sectionSub').textContent = 'Lagu yang lo simpan';
+  $('q').value = '';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'playlist'));
+  renderList(playlist, { playlist: true });
+}
+
+// Download tab
+async function renderDownloadsTab() {
+  const dl = await dlList();
+  $('sectionH').textContent = `⬇️ Offline (${dl.length})`;
+  $('sectionSub').textContent = 'Lagu yang tersimpan di device';
+  $('q').value = '';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'downloads'));
+  if (!dl.length) {
+    $('content').className = '';
+    $('content').innerHTML = '<div class="playlist-empty"><div class="big-icon">⬇️</div><h3>Belum ada offline</h3><small>Tap ikon ⬇ di bottom player untuk download lagu. Bisa diputar tanpa internet!</small></div>';
+    return;
+  }
+  $('content').className = 'list';
+  $('content').innerHTML = `<div class="list-head"><div class="col-num">#</div><div>Judul</div><div class="col-alb">Artis</div><div class="col-dur">⏱</div><div></div></div>` +
+    dl.map((t, i) => {
+      const isPlaying = cur >= 0 && playlist[cur]?.id === t.id && !audio.paused;
+      const sizeMB = t._size ? (t._size / 1024 / 1024).toFixed(1) : '?';
+      return `
+      <div class="row${isPlaying ? ' playing' : ''}" data-id="${t.id}">
+        <div class="num">${isPlaying ? eqHTML(true) : (i+1)}</div>
+        <div class="name">${esc(t.title)}</div>
+        <div class="artist">${esc(t.artist)} <span style="color:#4ade80;font-size:.7rem">• ${sizeMB}MB</span></div>
+        <div class="dur">${fmtTime(t.duration)}</div>
+        <div style="display:flex;gap:2px;justify-content:flex-end">
+          <button class="row-act" data-act="dlRemove" data-id="${t.id}" title="Hapus offline">🗑</button>
+          <button class="play-btn" data-act="play" data-id="${t.id}" title="Putar">${isPlaying ? '⏸' : '▶'}</button>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// Download track to offline storage
+async function downloadTrack(track) {
+  if (!track || !track.streamUrl) { toast('Track tidak punya stream URL'); return; }
+  toast('⬇️ Mendownload...');
+  try {
+    const r = await fetch(track.streamUrl);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const data = {
+      ...track,
+      _blobUrl: objUrl,
+      _size: blob.size,
+      _downloadedAt: Date.now(),
+    };
+    await dlSave(data);
+    await updateDlCount();
+    toast(`✓ Tersimpan offline: ${track.title.slice(0, 25)}...`);
+    if (cur >= 0 && playlist[cur]?.id === track.id) {
+      $('dlBtn').textContent = '✓';
+      $('dlBtn').title = 'Sudah offline';
+    }
+    if (document.querySelector('.tab.active[data-tab="downloads"]')) await renderDownloadsTab();
+  } catch (e) {
+    console.error('Download failed:', e);
+    toast('Download gagal: ' + e.message);
+  }
+}
+
+// Extended loadTab
+async function loadTab(tab) {
+  if (tab === 'playlist') return renderPlaylistTab();
+  if (tab === 'downloads') return renderDownloadsTab();
+
+  const labels = {trending:'🔥 Trending',electronic:'🎛️ Electronic',lofi:'🎧 Lo-fi',chill:'🌙 Chill',hiphop:'🎤 Hip-hop',pop:'🎵 Pop',rock:'🎸 Rock'};
+  const genres = {trending:null,electronic:'Electronic',lofi:'Lo-Fi',chill:'Chill',hiphop:'Hip-Hop/Rap',pop:'Pop',rock:'Rock'};
+  $('sectionH').textContent = labels[tab] || 'Hasil';
+  $('sectionSub').textContent = 'Full songs • Audius';
+  $('content').innerHTML = '<div class="empty"><div class="skeleton" style="height:160px;margin:12px 0"></div><div class="skeleton" style="height:160px;margin:12px 0"></div><div class="skeleton" style="height:160px;margin:12px 0"></div></div>';
+  try {
+    let tracks;
+    if (tab === 'trending') {
+      tracks = await audiusTrending();
+    } else if (genres[tab]) {
+      tracks = await audiusTrending(genres[tab]);
+    } else {
+      tracks = await audiusTrending(null);
+    }
+    currentList = tracks;
+    renderCards(tracks);
+  } catch (e) {
+    $('content').innerHTML = '<div class="empty"><h3>Error</h3><p>' + esc(e.message) + '</p></div>';
+  }
+}
+
+// Updated playTrack: use offline blob if available, count plays, show buttons
+async function playTrackV7(track) {
+  if (!track) return;
+  // Close YT overlay
+  $('ytMini').classList.remove('show');
+  $('ytFrame').src = '';
+
+  // Check offline first
+  let streamUrl = null;
+  if (track.id && track.id.startsWith('audius-')) {
+    const offline = await dlGet(track.id);
+    if (offline?._blobUrl) {
+      streamUrl = offline._blobUrl;
+      console.log('Playing from offline cache');
+    }
+  }
+  if (!streamUrl) streamUrl = track.streamUrl || getStreamUrl(track.audiusId);
+  if (!streamUrl) { toast('Track tidak bisa diputar'); return; }
+  if (track.isStreamable === false) { toast('Track ini tidak tersedia untuk streaming'); return; }
+
+  audio.src = streamUrl;
+
+  try {
+    await audio.play();
+  } catch (e) {
+    console.error('Audio play failed:', e);
+    toast('Gagal play - coba lagi');
+    return;
+  }
+
+  playCount++;
+  LS.set('playCount', playCount);
+  updateStats();
+
+  // Add to current playlist queue
+  if (!playlist.find(t => t.id === track.id)) playlist.push(track);
+  cur = playlist.findIndex(t => t.id === track.id);
+  LS.set('playlist', playlist);
+
+  // UI updates
+  $('npAddBtn').style.display = 'flex';
+  $('dlBtn').style.display = 'flex';
+  const isOffline = streamUrl.startsWith('blob:');
+  $('dlBtn').textContent = isOffline ? '✓' : '⬇';
+  $('dlBtn').title = isOffline ? 'Sudah offline' : 'Download offline';
+
+  setupMediaSession(track);
+  updatePlayingState(track);
+}
+
+// Visual playing state for hero + np
+function updatePlayingState(track) {
+  $('hero').classList.remove('empty');
+  $('heroEyebrow').textContent = audio.paused ? 'DIJEDA' : 'SEKARANG DIPUTAR';
+  $('heroTitle').textContent = track.title;
+  $('heroArtist').textContent = track.artist + (audio.src.startsWith('blob:') ? ' ⬇ offline' : '');
+  $('npTitle').textContent = track.title;
+  $('npArtist').textContent = track.artist;
+  $('npArt').src = track.art || '';
+  $('heroArt').src = track.art || '';
+  $('playBtn').textContent = audio.paused ? '▶' : '⏸';
+  $('playBtn').classList.toggle('playing', !audio.paused);
+  $('heroPlay').classList.toggle('playing', !audio.paused);
+  $('heroPlay').textContent = audio.paused ? '▶' : '⏸';
+  $('totTime').textContent = fmtTime(track.duration || audio.duration);
+  if ($('content').classList.contains('cards')) renderCards(currentList);
+  if ($('content').classList.contains('list') && document.querySelector('.tab.active[data-tab="playlist"]')) renderPlaylistTab();
+  if (document.querySelector('.tab.active[data-tab="downloads"]')) renderDownloadsTab();
+}
+
+// Replace old playTrack
+playTrack = playTrackV7;
+
+// Audio event hooks (override)
+audio.onplay = () => {
+  $('playBtn').textContent = '⏸';
+  $('playBtn').classList.add('playing');
+  $('heroPlay').textContent = '⏸';
+  $('heroPlay').classList.add('playing');
+  if (cur >= 0 && playlist[cur]) $('heroEyebrow').textContent = 'SEKARANG DIPUTAR';
+  if ($('content').classList.contains('cards')) renderCards(currentList);
+  if (document.querySelector('.tab.active[data-tab="playlist"]')) renderPlaylistTab();
+  if (document.querySelector('.tab.active[data-tab="downloads"]')) renderDownloadsTab();
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+};
+audio.onpause = () => {
+  $('playBtn').textContent = '▶';
+  $('playBtn').classList.remove('playing');
+  $('heroPlay').textContent = '▶';
+  $('heroPlay').classList.remove('playing');
+  if (cur >= 0 && playlist[cur]) $('heroEyebrow').textContent = 'DIJEDA';
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+};
+audio.ontimeupdate = () => {
+  if (!audio.duration) return;
+  $('progressFill').style.width = (audio.currentTime / audio.duration * 100) + '%';
+  $('curTime').textContent = fmtTime(audio.currentTime);
+  if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+    try { navigator.mediaSession.setPositionState({ duration: audio.duration, playbackRate: audio.playbackRate, position: audio.currentTime }); } catch {}
+  }
+};
+audio.onended = () => {
+  $('playBtn').textContent = '▶';
+  if (repeatOn) { audio.currentTime = 0; audio.play(); return; }
+  if (shuffleOn && shuffleOrder.length > 1) {
+    const next = shuffleOrder.find(id => id !== playlist[cur]?.id);
+    const t = playlist.find(p => p.id === next);
+    if (t) { playTrack(t); return; }
+  }
+  if (cur < playlist.length - 1) playTrack(playlist[cur + 1]);
+};
+
+// New buttons
+$('npAddBtn').onclick = () => { if (cur >= 0) addToPlaylist(playlist[cur]); };
+$('dlBtn').onclick = () => {
+  if (cur < 0) return;
+  const t = playlist[cur];
+  if ($('dlBtn').textContent === '✓') { toast('Sudah offline'); return; }
+  downloadTrack(t);
+};
+$('shuffleBtn').onclick = () => {
+  shuffleOn = !shuffleOn;
+  LS.set('shuffle', shuffleOn);
+  $('shuffleBtn').style.color = shuffleOn ? 'var(--accent)' : '';
+  if (shuffleOn) shuffleOrder = playlist.map(p => p.id).sort(() => Math.random() - 0.5);
+  toast(shuffleOn ? '🔀 Shuffle ON' : 'Shuffle OFF');
+};
+$('repeatBtn').onclick = () => {
+  repeatOn = !repeatOn;
+  LS.set('repeat', repeatOn);
+  $('repeatBtn').style.color = repeatOn ? 'var(--accent)' : '';
+  toast(repeatOn ? '🔁 Repeat ON' : 'Repeat OFF');
+};
+$('shuffleBtn').style.color = shuffleOn ? 'var(--accent)' : '';
+$('repeatBtn').style.color = repeatOn ? 'var(--accent)' : '';
+$('volSlider').oninput = e => { audio.volume = e.target.value / 100; $('volIcon').textContent = audio.volume === 0 ? '🔇' : audio.volume < 0.5 ? '🔉' : '🔊'; };
+audio.volume = $('volSlider').value / 100;
+
+// Refresh button
+$('refreshBtn').onclick = () => {
+  $('refreshBtn').classList.add('loading');
+  const activeTab = document.querySelector('.tab.active')?.dataset.tab || 'trending';
+  loadTab(activeTab).finally(() => setTimeout(() => $('refreshBtn').classList.remove('loading'), 400));
+};
+
+// About modal
+$('aboutBtn').onclick = () => { updateStats(); updateDlCount(); $('aboutModal').classList.add('show'); };
+$('aboutClose').onclick = () => $('aboutModal').classList.remove('show');
+$('aboutModal').onclick = e => { if (e.target === $('aboutModal')) $('aboutModal').classList.remove('show'); };
+$('clearDataBtn').onclick = async () => {
+  if (!confirm('Hapus semua data lokal? Playlist, history, downloads bakal ilang.')) return;
+  localStorage.clear();
+  const db = await openDB();
+  db.transaction(DB_STORE, 'readwrite').objectStore(DB_STORE).clear();
+  playlist = [];
+  playCount = 0;
+  shuffleOn = false;
+  repeatOn = false;
+  updateStats();
+  await updateDlCount();
+  toast('✓ Semua data dihapus');
+  $('aboutModal').classList.remove('show');
+};
+
+// Extended click handler for v7 actions
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-act]');
+  if (btn?.dataset.act === 'plAdd') {
+    e.stopPropagation();
+    const t = currentList.find(x => x.id === btn.dataset.id);
+    if (t) await addToPlaylist(t);
+  } else if (btn?.dataset.act === 'plRemove') {
+    e.stopPropagation();
+    await removeFromPlaylist(btn.dataset.id);
+  } else if (btn?.dataset.act === 'dlRemove') {
+    e.stopPropagation();
+    if (confirm('Hapus dari offline?')) {
+      await dlDelete(btn.dataset.id);
+      await updateDlCount();
+      await renderDownloadsTab();
+    }
+  }
+});
+
+// Service Worker for offline shell + background audio
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'aimusic-v7';
+    self.addEventListener('install', e => { self.skipWaiting(); });
+    self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
+    self.addEventListener('fetch', e => {
+      if (e.request.method !== 'GET') return;
+      const url = new URL(e.request.url);
+      if (url.hostname.includes('audius') || url.hostname.includes('youtube')) return;
+      e.respondWith(caches.open(CACHE).then(c => c.match(e.request).then(r => r || fetch(e.request).then(res => { c.put(e.request, res.clone()); return res; }).catch(() => r))));
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+// Init stats + counts
+updateStats();
+updateDlCount();
 
 loadTab('trending');
 </script>
