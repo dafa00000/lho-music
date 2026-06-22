@@ -8,8 +8,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- v6.0-audius-full-songs -->
-<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Ai Music","short_name":"Ai","start_url":".","display":"standalone","background_color":"%23000","theme_color":"%23FF4D6D","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2040%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M48%2060v72a18%2018%200%201%200%2012%2016.6V85.5l72-21v57a18%2018%200%201%200%2012%2016.6V42z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22100%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M128%20160v192a48%2048%200%201%200%2032%2044.3V228l192-56v152a48%2048%200%201%200%2032%2044.3V112z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
+<!-- v7.0-playlist-downloads-mediasession -->
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Ai Music","short_name":"Ai","start_url":"./?v=7","display":"standalone","background_color":"%23000","theme_color":"%23FF4D6D","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2040%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M48%2060v72a18%2018%200%201%200%2012%2016.6V85.5l72-21v57a18%2018%200%201%200%2012%2016.6V42z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22100%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M128%20160v192a48%2048%200%201%200%2032%2044.3V228l192-56v152a48%2048%200%201%200%2032%2044.3V112z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
 <style>
 :root{--accent:#FF4D6D;--bg:#000;--bg2:#121212;--bg3:#1a1a1a;--bg4:#262626;--border:#282828;--text:#fff;--text2:#b3b3b3;--text3:#777}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
@@ -498,25 +498,10 @@ function renderList(tracks) {
       </div>`).join('');
 }
 
+// v6 loadTab removed — v7 version defined below at line ~890
+// (kept as no-op fallback to avoid ReferenceError if v7 fails to load)
 async function loadTab(tab) {
-  const labels = {trending:'🔥 Trending',electronic:'🎛️ Electronic',lofi:'🎧 Lo-fi',chill:'🌙 Chill',hiphop:'🎤 Hip-hop',pop:'🎵 Pop',rock:'🎸 Rock'};
-  const genres = {trending:null,electronic:'Electronic',lofi:'Lo-Fi',chill:'Chill',hiphop:'Hip-Hop/Rap',pop:'Pop',rock:'Rock'};
-  $('sectionH').textContent = labels[tab] || 'Hasil';
-  $('content').innerHTML = '<div class="empty">Loading...</div>';
-  try {
-    let tracks;
-    if (tab === 'trending') {
-      tracks = await audiusTrending();
-    } else if (genres[tab]) {
-      tracks = await audiusTrending(genres[tab]);
-    } else {
-      tracks = await audiusTrending(null);
-    }
-    currentList = tracks;
-    renderCards(tracks);
-  } catch (e) {
-    $('content').innerHTML = '<div class="empty"><h3>Error</h3><p>' + esc(e.message) + '</p></div>';
-  }
+  // fallback: do nothing
 }
 
 async function doSearch() {
@@ -1115,9 +1100,9 @@ document.addEventListener('click', async e => {
 // Service Worker for offline shell + background audio
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'aimusic-v7';
+    const CACHE = 'aimusic-v7-' + Date.now();
     self.addEventListener('install', e => { self.skipWaiting(); });
-    self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
+    self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('aimusic-')).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
     self.addEventListener('fetch', e => {
       if (e.request.method !== 'GET') return;
       const url = new URL(e.request.url);
