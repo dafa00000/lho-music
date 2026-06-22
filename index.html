@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- v7.0-playlist-downloads-mediasession -->
+<!-- v9.0-spotify-bottom-nav -->
 <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Ai Music","short_name":"Ai","start_url":"./?v=7","display":"standalone","background_color":"%23000","theme_color":"%23FF4D6D","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2040%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M48%2060v72a18%2018%200%201%200%2012%2016.6V85.5l72-21v57a18%2018%200%201%200%2012%2016.6V42z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22100%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M128%20160v192a48%2048%200%201%200%2032%2044.3V228l192-56v152a48%2048%200%201%200%2032%2044.3V112z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
 <style>
 :root{--accent:#FF4D6D;--bg:#000;--bg2:#121212;--bg3:#1a1a1a;--bg4:#262626;--border:#282828;--text:#fff;--text2:#b3b3b3;--text3:#777}
@@ -306,6 +306,20 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .quick-chip{flex-shrink:0;padding:8px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:500px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .quick-chip:hover{background:var(--bg4);border-color:rgba(255,255,255,.15)}
 .quick-chip.hot{background:linear-gradient(135deg,var(--accent),#8b1a3a);border-color:transparent;color:#fff}
+
+/* === v9 BOTTOM NAVIGATION (Spotify-style) === */
+.bottom-nav{display:grid;grid-template-columns:repeat(5,1fr);background:rgba(0,0,0,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:6px 0 max(8px, env(safe-area-inset-bottom));flex-shrink:0;z-index:10;position:relative}
+.bottom-nav::before{content:'';position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px 4px;background:transparent;border:0;color:var(--text3);cursor:pointer;font-size:.65rem;font-weight:600;font-family:inherit;transition:color .15s;text-decoration:none;position:relative;border-radius:8px}
+.bn-item .icon{font-size:1.4rem;line-height:1;transition:transform .2s}
+.bn-item:hover{color:#fff}
+.bn-item.active{color:var(--accent)}
+.bn-item.active .icon{transform:scale(1.15)}
+.bn-item .badge{position:absolute;top:1px;right:calc(50% - 18px);background:var(--accent);color:#fff;font-size:.55rem;padding:1px 5px;border-radius:8px;font-weight:700;min-width:16px;text-align:center;line-height:1.2;border:2px solid #000;box-sizing:content-box}
+.bn-item.active .badge{border-color:#000}
+
+/* Bigger tap target on the player play button when bottom nav is visible */
+@media(max-height:700px){.player{padding:4px 14px 8px}.ctrls{gap:10px}.ctrls .play-main{width:32px;height:32px;font-size:.8rem}}
 </style>
 </head>
 <body>
@@ -407,6 +421,14 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       </div>
     </div>
   </div>
+
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bn-item active" data-nav="home"><span class="icon">🏠</span><span>Home</span></button>
+    <button class="bn-item" data-nav="search"><span class="icon">🔍</span><span>Cari</span></button>
+    <button class="bn-item" data-nav="playlist"><span class="icon">📋</span><span>Playlist</span><span class="badge" id="bnPlCount" style="display:none">0</span></button>
+    <button class="bn-item" data-nav="downloads"><span class="icon">⬇️</span><span>Offline</span><span class="badge" id="bnDlCount" style="display:none">0</span></button>
+    <button class="bn-item" data-nav="menu"><span class="icon">⋮</span><span>Menu</span></button>
+  </nav>
 </div>
 
 <div class="modal-bg" id="modal">
@@ -822,6 +844,7 @@ async function updateDlCount() {
   const list = await dlList();
   $('dlCount').textContent = list.length;
   $('statOffline').textContent = list.length;
+  updateBottomNavBadges();
 }
 
 // Stats updates
@@ -829,6 +852,7 @@ function updateStats() {
   $('plCount').textContent = playlist.length;
   $('statSongs').textContent = playlist.length;
   $('statPlayed').textContent = playCount;
+  updateBottomNavBadges();
 }
 
 // Equalizer HTML helper
@@ -946,6 +970,7 @@ function renderPlaylistTab() {
   $('q').value = '';
   document.querySelector('.section-h')?.classList.remove('hidden');
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'playlist'));
+  syncBottomNav('playlist');
   renderList(playlist, { playlist: true });
 }
 
@@ -957,6 +982,7 @@ async function renderDownloadsTab() {
   $('q').value = '';
   document.querySelector('.section-h')?.classList.remove('hidden');
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'downloads'));
+  syncBottomNav('downloads');
   if (!dl.length) {
     $('content').className = '';
     $('content').innerHTML = '<div class="playlist-empty"><div class="big-icon">⬇️</div><h3>Belum ada offline</h3><small>Tap ikon ⬇ di bottom player untuk download lagu. Bisa diputar tanpa internet!</small></div>';
@@ -1080,6 +1106,7 @@ async function loadHome() {
   $('content').innerHTML = skelHtml;
   // Hide the section header in home mode (we have our own section labels)
   document.querySelector('.section-h')?.classList.add('hidden');
+  syncBottomNav('home');
 
   // Wire up quick chips
   document.querySelectorAll('.quick-chip').forEach((chip, i) => {
@@ -1145,6 +1172,7 @@ async function loadTab(tab) {
   $('sectionH').textContent = labels[tab] || 'Hasil';
   $('sectionSub').textContent = 'Full songs • Audius';
   document.querySelector('.section-h')?.classList.remove('hidden');
+  syncBottomNav('home'); // genre tabs treat as "home" category
   $('content').innerHTML = '<div class="empty"><div class="skeleton" style="height:160px;margin:12px 0"></div><div class="skeleton" style="height:160px;margin:12px 0"></div><div class="skeleton" style="height:160px;margin:12px 0"></div></div>';
   try {
     let tracks;
@@ -1359,6 +1387,47 @@ document.querySelectorAll('[data-menu]').forEach(btn => {
     else if (action === 'clear') $('clearDataBtn').click();
   };
 });
+
+// Bottom nav (Spotify-style)
+function syncBottomNav(tab) {
+  // Map tab → bottom nav item
+  const map = {
+    home: 'home',
+    playlist: 'playlist',
+    downloads: 'downloads',
+  };
+  const target = map[tab] || 'home'; // genre tabs (trending/electronic/etc) → Home active
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.nav === target));
+}
+document.querySelectorAll('.bn-item').forEach(btn => {
+  btn.onclick = () => {
+    const nav = btn.dataset.nav;
+    if (nav === 'home') loadTab('home');
+    else if (nav === 'search') {
+      // Focus the search bar at top + scroll to it
+      $('q').focus();
+      $('q').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    else if (nav === 'playlist') loadTab('playlist');
+    else if (nav === 'downloads') loadTab('downloads');
+    else if (nav === 'menu') {
+      // Open dropdown menu from topbar
+      $('menuBtn').click();
+    }
+  };
+});
+// Update bottom nav badges
+function updateBottomNavBadges() {
+  const pl = playlist.length;
+  const bnPl = $('bnPlCount');
+  if (pl > 0) { bnPl.style.display = ''; bnPl.textContent = pl > 99 ? '99+' : pl; }
+  else { bnPl.style.display = 'none'; }
+  dlList().then(list => {
+    const bnDl = $('bnDlCount');
+    if (list.length > 0) { bnDl.style.display = ''; bnDl.textContent = list.length > 99 ? '99+' : list.length; }
+    else { bnDl.style.display = 'none'; }
+  });
+}
 $('aboutClose').onclick = () => $('aboutModal').classList.remove('show');
 $('aboutModal').onclick = e => { if (e.target === $('aboutModal')) $('aboutModal').classList.remove('show'); };
 $('clearDataBtn').onclick = async () => {
