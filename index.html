@@ -477,7 +477,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
     </div>
 
-    <div class="about-row"><span class="label">Versi</span><span class="value">v9.6 • 22 Juni 2026</span></div>
+    <div class="about-row"><span class="label">Versi</span><span class="value">v9.7 • 22 Juni 2026</span></div>
     <div class="about-row"><span class="label">Developer</span><span class="value">YANZYAHA</span></div>
     <div class="about-row"><span class="label">Powered by</span><span class="value">Audius + YouTube</span></div>
     <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML</span></div>
@@ -797,31 +797,70 @@ let shuffleOrder = [];
 // IndexedDB for offline downloads
 const DB_NAME = 'aimusic_dl';
 const DB_STORE = 'tracks';
+// Self-heal: check DB health on load and reset if blocked
+(async function healDB() {
+  try {
+    const db = await openDB();
+    db.close();
+  } catch (e) {
+    console.warn('DB unhealthy, recreating:', e.message);
+    await new Promise(r => {
+      const req = indexedDB.deleteDatabase(DB_NAME);
+      req.onsuccess = req.onerror = req.onblocked = () => r();
+    });
+  }
+})();
 function openDB() {
   return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE, { keyPath: 'id' });
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
+    let settled = false;
+    const settle = (fn, val) => { if (!settled) { settled = true; fn(val); } };
+    const timeout = setTimeout(() => settle(rej, new Error('IDB open timeout (10s)')), 10000);
+    try {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => { try { req.result.createObjectStore(DB_STORE, { keyPath: 'id' }); } catch(e) {} };
+      req.onsuccess = () => { clearTimeout(timeout); settle(res, req.result); };
+      req.onerror = () => { clearTimeout(timeout); settle(rej, req.error); };
+      req.onblocked = () => { clearTimeout(timeout); settle(rej, new Error('IDB blocked — close other tabs?')); };
+    } catch (e) {
+      clearTimeout(timeout);
+      settle(rej, e);
+    }
   });
 }
 async function dlSave(track) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction(DB_STORE, 'readwrite');
-    tx.objectStore(DB_STORE).put(track);
-    tx.oncomplete = () => res();
-    tx.onerror = () => rej(tx.error);
-  });
+  try {
+    const db = await openDB();
+    return await new Promise((res, rej) => {
+      let settled = false;
+      const settle = (fn, v) => { if (!settled) { settled = true; fn(v); } };
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).put(track);
+      tx.oncomplete = () => settle(res);
+      tx.onerror = () => settle(rej, tx.error);
+      tx.onabort = () => settle(rej, new Error('IDB tx aborted'));
+      setTimeout(() => settle(rej, new Error('dlSave timeout (10s)')), 10000);
+    });
+  } catch (e) {
+    console.error('dlSave failed:', e.message);
+    throw e;
+  }
 }
 async function dlGet(id) {
-  const db = await openDB();
-  return new Promise((res) => {
-    const tx = db.transaction(DB_STORE, 'readonly');
-    const req = tx.objectStore(DB_STORE).get(id);
-    req.onsuccess = () => res(req.result || null);
-    req.onerror = () => res(null);
-  });
+  try {
+    const db = await openDB();
+    return await new Promise((res) => {
+      let settled = false;
+      const settle = (v) => { if (!settled) { settled = true; res(v); } };
+      const tx = db.transaction(DB_STORE, 'readonly');
+      const req = tx.objectStore(DB_STORE).get(id);
+      req.onsuccess = () => settle(req.result || null);
+      req.onerror = () => settle(null);
+      setTimeout(() => settle(null), 5000);
+    });
+  } catch (e) {
+    console.warn('dlGet failed:', e.message);
+    return null;
+  }
 }
 async function dlDelete(id) {
   const db = await openDB();
@@ -1543,7 +1582,7 @@ if ('serviceWorker' in navigator) {
       if (url.hostname.includes('audius') || url.hostname.includes('youtube')) return; // don't cache streams
       e.respondWith(fetch(e.request).then(res => {
         const clone = res.clone();
-        caches.open('aimusic-v96').then(c => c.put(e.request, clone));
+        caches.open('aimusic-v97').then(c => c.put(e.request, clone));
         return res;
       }).catch(() => caches.match(e.request)));
     });
@@ -1571,7 +1610,7 @@ updateDlCount();
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:10px 18px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✓ Updated to v9.6 — robust API lookup + better errors! — About page fixed + GitHub button!';
+    b.innerHTML = '✓ Updated to v9.7 — robust IDB + self-heal! — About page fixed + GitHub button!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
