@@ -502,6 +502,16 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 <audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
 
 <script>
+// Global error capture — show fatal errors as toast (don't fail silently)
+window.addEventListener('error', e => {
+  console.error('[FATAL]', e.error?.message || e.message);
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 18px;border-radius:12px;font-size:.82rem;z-index:99999;max-width:90%;box-shadow:0 8px 24px rgba(0,0,0,.5);font-family:monospace';
+  t.textContent = '⚠️ Error: ' + (e.error?.message || e.message);
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 8000);
+});
+
 const $ = id => document.getElementById(id);
 const audio = $('audio');
 const AUDIUS = 'https://discoveryprovider.audius.co';
@@ -601,42 +611,15 @@ $('ytClose').onclick = () => {
   $('heroArtist').textContent = 'Search atau paste YouTube URL 🎵';
 };
 
-function renderCards(tracks) {
-  if (!tracks.length) { $('content').className = ''; $('content').innerHTML = '<div class="empty"><h3>Tidak ada hasil</h3><small>Coba kata kunci lain, atau paste URL YouTube untuk lagu mainstream</small></div>'; return; }
-  $('content').className = 'cards';
-  $('content').innerHTML = tracks.map(t => `
-    <div class="card" data-id="${t.id}">
-      ${t.duration ? `<div class="card-dur">${fmtTime(t.duration)}</div>` : ''}
-      <img class="card-art" src="${t.art || ''}" alt="" loading="lazy" onerror="this.style.background='#333'">
-      <div class="card-name">${esc(t.title)}</div>
-      <div class="card-artist">${esc(t.artist)}</div>
-      <button class="card-play" data-act="play" data-id="${t.id}">▶</button>
-    </div>`).join('');
-}
+// v6 renderCards/renderList stubs removed (duplicate declarations caused SyntaxError
+// that halted entire script). Real v9 versions are below — do NOT redeclare.
 
-function renderList(tracks) {
-  if (!tracks.length) { $('content').className = ''; $('content').innerHTML = '<div class="empty"><h3>Tidak ada hasil</h3><small>Coba kata kunci lain</small></div>'; return; }
-  $('content').className = 'list';
-  $('content').innerHTML = `<div class="list-head"><div class="col-num">#</div><div>Judul</div><div class="col-alb">Artis</div><div class="col-dur">⏱</div><div></div></div>` +
-    tracks.map((t, i) => `
-      <div class="row" data-id="${t.id}">
-        <div class="num">${i+1}</div>
-        <div class="name">${esc(t.title)}</div>
-        <div class="artist">${esc(t.artist)}</div>
-        <div class="dur">${fmtTime(t.duration)}</div>
-        <button class="play-btn" data-act="play" data-id="${t.id}" title="Putar">▶</button>
-      </div>`).join('');
-}
-
-// v6 loadTab removed — v7 version defined below at line ~890
-// (kept as no-op fallback to avoid ReferenceError if v7 fails to load)
-async function loadTab(tab) {
-  // fallback: do nothing
-}
+// v6 loadTab stub removed (was duplicate declaration = SyntaxError that halted the entire script)
+// Real v9 loadTab is defined below; do NOT redeclare this function
 
 async function doSearch() {
   const q = $('q').value.trim();
-  if (!q) { loadTab('trending'); return; }
+  if (!q) { loadTab('home'); return; }
   $('sectionH').textContent = `Hasil: "${q}"`;
   $('content').innerHTML = '<div class="empty">Mencari di Audius...</div>';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
