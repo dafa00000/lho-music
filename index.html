@@ -126,6 +126,26 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .right{display:flex;align-items:center;justify-content:flex-end;gap:8px}
 @media(max-width:640px){.right{display:none}}
 
+/* Mobile action bar (visible only on small screens) */
+.mobile-actions{display:none;align-items:center;gap:4px;flex-shrink:0}
+@media(max-width:640px){.mobile-actions{display:flex}}
+
+/* Inline download button (in np area, always visible) */
+.np-dl{background:transparent;border:0;color:var(--text2);font-size:1rem;cursor:pointer;padding:6px;border-radius:50%;transition:all .15s;display:none;align-items:center;justify-content:center}
+.np-dl:hover{color:var(--accent);background:rgba(255,77,109,.1)}
+.np-dl.downloaded{color:#4ade80}
+
+/* Per-card download button (visible on all screens) */
+.card-dl{position:absolute;bottom:54px;left:14px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:0;font-size:.75rem;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(8px);transition:all .2s;backdrop-filter:blur(8px);cursor:pointer}
+.card:hover .card-dl{opacity:1;transform:translateY(0)}
+.card-dl:hover{background:var(--accent)}
+.card-dl.downloaded{color:#4ade80;opacity:1;transform:translateY(0)}
+
+/* Row download button */
+.row .row-dl{background:transparent;border:0;color:var(--text3);font-size:.9rem;cursor:pointer;padding:4px;border-radius:50%;transition:all .15s}
+.row .row-dl:hover{color:var(--accent);background:rgba(255,77,109,.1)}
+.row .row-dl.downloaded{color:#4ade80}
+
 .toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 18px;border-radius:500px;font-weight:600;font-size:.82rem;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5)}
 .toast.show{opacity:1}
 
@@ -278,6 +298,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
         <div class="np-title" id="npTitle">—</div>
         <div class="np-artist" id="npArtist">Pilih lagu</div>
       </div>
+      <button class="icon-btn np-dl" id="npDlBtn" title="Download offline" style="display:none">⬇</button>
       <button class="icon-btn" id="npAddBtn" title="Tambah ke Playlist" style="display:none">+</button>
     </div>
     <div class="center">
@@ -299,7 +320,6 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
         <span id="volIcon" style="font-size:.85rem">🔊</span>
         <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="80">
       </div>
-      <button class="icon-btn" id="dlBtn" title="Download offline" style="display:none">⬇</button>
     </div>
   </div>
 </div>
@@ -764,9 +784,17 @@ function renderCards(tracks) {
       <img class="card-art" src="${t.art || ''}" alt="" loading="lazy" onerror="this.style.background='#333'">
       <div class="card-name">${esc(t.title)}</div>
       <div class="card-artist">${esc(t.artist)}</div>
+      <button class="card-dl" data-act="dlOne" data-id="${t.id}" title="Download offline">⬇</button>
       <button class="card-play" data-act="play" data-id="${t.id}">${isPlaying ? '⏸' : '▶'}</button>
     </div>`;
   }).join('');
+  // Update downloaded state
+  dlList().then(list => {
+    const ids = new Set(list.map(t => t.id));
+    document.querySelectorAll('.card-dl').forEach(btn => {
+      if (ids.has(btn.dataset.id)) { btn.classList.add('downloaded'); btn.textContent = '✓'; }
+    });
+  });
 }
 
 // Render row with playlist actions
@@ -794,11 +822,19 @@ function renderList(tracks, opts = {}) {
         <div class="artist">${esc(t.artist)}</div>
         <div class="dur">${fmtTime(t.duration)}</div>
         <div style="display:flex;gap:2px;justify-content:flex-end">
+          <button class="row-dl" data-act="dlOne" data-id="${t.id}" title="Download">⬇</button>
           ${opts.playlist ? `<button class="row-act" data-act="plRemove" data-id="${t.id}" title="Hapus dari playlist">✕</button>` : `<button class="row-act${inPl ? ' active' : ''}" data-act="plAdd" data-id="${t.id}" title="Tambah ke playlist">${inPl ? '✓' : '+'}</button>`}
           <button class="play-btn" data-act="play" data-id="${t.id}" title="Putar">${isPlaying ? '⏸' : '▶'}</button>
         </div>
       </div>`;
     }).join('');
+  // Update downloaded state
+  dlList().then(list => {
+    const ids = new Set(list.map(t => t.id));
+    document.querySelectorAll('.row-dl').forEach(btn => {
+      if (ids.has(btn.dataset.id)) { btn.classList.add('downloaded'); btn.textContent = '✓'; }
+    });
+  });
 }
 
 // Add to playlist
@@ -860,10 +896,30 @@ async function renderDownloadsTab() {
 
 // Download track to offline storage
 async function downloadTrack(track) {
-  if (!track || !track.streamUrl) { toast('Track tidak punya stream URL'); return; }
+  if (!track) { toast('Track ga valid'); return; }
+
+  // Ensure we have a valid stream URL (refresh if expired)
+  let streamUrl = track.streamUrl;
+  if (!streamUrl || streamUrl.includes('signature=')) {
+    // Fetch fresh from API
+    try {
+      const r = await fetch(`${AUDIUS}/v1/tracks/${track.audiusId}?app_name=aimusic`);
+      if (r.ok) {
+        const data = await r.json();
+        if (data.data?.[0]?.stream?.url) {
+          streamUrl = data.data[0].stream.url;
+        }
+      }
+    } catch (e) { /* ignore, use original */ }
+  }
+  // Final fallback: construct URL
+  if (!streamUrl && track.audiusId) streamUrl = getStreamUrl(track.audiusId);
+
+  if (!streamUrl) { toast('Track tidak punya stream URL'); return; }
+
   toast('⬇️ Mendownload...');
   try {
-    const r = await fetch(track.streamUrl);
+    const r = await fetch(streamUrl);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const blob = await r.blob();
     const objUrl = URL.createObjectURL(blob);
@@ -877,9 +933,13 @@ async function downloadTrack(track) {
     await updateDlCount();
     toast(`✓ Tersimpan offline: ${track.title.slice(0, 25)}...`);
     if (cur >= 0 && playlist[cur]?.id === track.id) {
-      $('dlBtn').textContent = '✓';
-      $('dlBtn').title = 'Sudah offline';
+      $('npDlBtn').classList.add('downloaded');
+      $('npDlBtn').textContent = '✓';
+      $('npDlBtn').title = 'Sudah offline';
     }
+    // Update card/row downloaded state
+    const btn = document.querySelector(`[data-act="dlOne"][data-id="${track.id}"]`);
+    if (btn) { btn.classList.add('downloaded'); btn.textContent = '✓'; }
     if (document.querySelector('.tab.active[data-tab="downloads"]')) await renderDownloadsTab();
   } catch (e) {
     console.error('Download failed:', e);
@@ -913,7 +973,7 @@ async function loadTab(tab) {
   }
 }
 
-// Updated playTrack: use offline blob if available, count plays, show buttons
+// Updated playTrack: use offline blob if available, refresh expired URL, count plays
 async function playTrackV7(track) {
   if (!track) return;
   // Close YT overlay
@@ -929,9 +989,23 @@ async function playTrackV7(track) {
       console.log('Playing from offline cache');
     }
   }
+  // Refresh signed URL if expired (older than 30 min)
+  if (!streamUrl && track.streamUrl && (!track._streamFetchedAt || Date.now() - track._streamFetchedAt > 30 * 60 * 1000)) {
+    try {
+      const r = await fetch(`${AUDIUS}/v1/tracks/${track.audiusId}?app_name=aimusic`);
+      if (r.ok) {
+        const data = await r.json();
+        if (data.data?.[0]?.stream?.url) {
+          streamUrl = data.data[0].stream.url;
+          track.streamUrl = streamUrl;
+          track._streamFetchedAt = Date.now();
+        }
+      }
+    } catch (e) { /* ignore */ }
+  }
   if (!streamUrl) streamUrl = track.streamUrl || getStreamUrl(track.audiusId);
   if (!streamUrl) { toast('Track tidak bisa diputar'); return; }
-  if (track.isStreamable === false) { toast('Track ini tidak tersedia untuk streaming'); return; }
+  if (track.isStreamable === false) { toast('Track ini tidak tersedia untuk streaming'); skipToNext(); return; }
 
   audio.src = streamUrl;
 
@@ -952,15 +1026,27 @@ async function playTrackV7(track) {
   cur = playlist.findIndex(t => t.id === track.id);
   LS.set('playlist', playlist);
 
-  // UI updates
+  // UI updates — show download button in NP area
   $('npAddBtn').style.display = 'flex';
-  $('dlBtn').style.display = 'flex';
+  $('npDlBtn').style.display = 'flex';
   const isOffline = streamUrl.startsWith('blob:');
-  $('dlBtn').textContent = isOffline ? '✓' : '⬇';
-  $('dlBtn').title = isOffline ? 'Sudah offline' : 'Download offline';
+  if (isOffline) {
+    $('npDlBtn').classList.add('downloaded');
+    $('npDlBtn').textContent = '✓';
+    $('npDlBtn').title = 'Sudah offline';
+  } else {
+    $('npDlBtn').classList.remove('downloaded');
+    $('npDlBtn').textContent = '⬇';
+    $('npDlBtn').title = 'Download offline';
+  }
 
   setupMediaSession(track);
   updatePlayingState(track);
+}
+
+function skipToNext() {
+  if (cur < playlist.length - 1) playTrack(playlist[cur + 1]);
+  else toast('Tidak ada lagu berikutnya');
 }
 
 // Visual playing state for hero + np
@@ -1027,10 +1113,10 @@ audio.onended = () => {
 
 // New buttons
 $('npAddBtn').onclick = () => { if (cur >= 0) addToPlaylist(playlist[cur]); };
-$('dlBtn').onclick = () => {
+$('npDlBtn').onclick = () => {
   if (cur < 0) return;
   const t = playlist[cur];
-  if ($('dlBtn').textContent === '✓') { toast('Sudah offline'); return; }
+  if ($('npDlBtn').classList.contains('downloaded')) { toast('Sudah offline'); return; }
   downloadTrack(t);
 };
 $('shuffleBtn').onclick = () => {
@@ -1082,11 +1168,22 @@ document.addEventListener('click', async e => {
   const btn = e.target.closest('button[data-act]');
   if (btn?.dataset.act === 'plAdd') {
     e.stopPropagation();
-    const t = currentList.find(x => x.id === btn.dataset.id);
+    const t = currentList.find(x => x.id === btn.dataset.id) || playlist.find(x => x.id === btn.dataset.id);
     if (t) await addToPlaylist(t);
   } else if (btn?.dataset.act === 'plRemove') {
     e.stopPropagation();
     await removeFromPlaylist(btn.dataset.id);
+  } else if (btn?.dataset.act === 'dlOne') {
+    e.stopPropagation();
+    const t = currentList.find(x => x.id === btn.dataset.id) || playlist.find(x => x.id === btn.dataset.id) || (await dlGet(btn.dataset.id));
+    if (t) {
+      btn.textContent = '⏳';
+      btn.disabled = true;
+      await downloadTrack(t);
+      btn.disabled = false;
+    } else {
+      toast('Track ga ketemu');
+    }
   } else if (btn?.dataset.act === 'dlRemove') {
     e.stopPropagation();
     if (confirm('Hapus dari offline?')) {
