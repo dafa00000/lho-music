@@ -237,6 +237,27 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 /* Spinning refresh */
 @keyframes spin{to{transform:rotate(360deg)}}
 .refresh-btn.loading svg{animation:spin 1s linear infinite}
+
+/* === v7.3 DROPDOWN MENU === */
+.dropdown{position:relative}
+.dropdown-btn{font-size:1.3rem;font-weight:700;line-height:1}
+.dropdown-menu{position:absolute;top:calc(100% + 10px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-width:220px;padding:6px;display:none;z-index:200;box-shadow:0 12px 32px rgba(0,0,0,.6);animation:fadeIn .2s ease}
+.dropdown-menu.show{display:block}
+.dropdown-menu::before{content:'';position:absolute;top:-6px;right:14px;width:12px;height:12px;background:var(--bg2);border-left:1px solid var(--border);border-top:1px solid var(--border);transform:rotate(45deg)}
+.menu-item{width:100%;padding:11px 14px;background:transparent;border:0;color:#fff;text-align:left;cursor:pointer;border-radius:10px;font-size:.85rem;display:flex;align-items:center;gap:10px;transition:all .15s;font-family:inherit}
+.menu-item:hover{background:var(--bg3);transform:translateX(2px)}
+.menu-item.danger{color:#ef4444}
+.menu-item.danger:hover{background:rgba(239,68,68,.1)}
+.menu-item .icon{font-size:1.1rem;width:22px;text-align:center}
+.menu-item .label{flex:1}
+.menu-item .badge{background:var(--accent);color:#fff;font-size:.65rem;padding:2px 6px;border-radius:8px;font-weight:700}
+.dropdown-menu hr{border:0;border-top:1px solid var(--border);margin:6px 4px}
+.menu-section{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:8px 14px 4px;font-weight:700}
+
+/* Tabs scroll indicator (subtle right fade) */
+.tabs-wrap{position:relative}
+.tabs-wrap::after{content:'';position:absolute;top:0;right:0;bottom:0;width:24px;background:linear-gradient(90deg,transparent,#000);pointer-events:none}
+@media(max-width:640px){.tabs-wrap::after{width:30px}}
 </style>
 </head>
 <body>
@@ -255,7 +276,20 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <button class="icon-btn" id="refreshBtn" title="Refresh">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A8 8 0 1 0 19.73 14h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
       </button>
-      <button class="icon-btn" id="aboutBtn" title="Tentang">ℹ</button>
+      <div class="dropdown">
+        <button class="icon-btn dropdown-btn" id="menuBtn" title="Menu">⋮</button>
+        <div class="dropdown-menu" id="menuDropdown">
+          <div class="menu-section">Library</div>
+          <button class="menu-item" data-menu="playlist"><span class="icon">📋</span><span class="label">My Playlist</span><span class="badge" id="menuPlCount">0</span></button>
+          <button class="menu-item" data-menu="downloads"><span class="icon">⬇️</span><span class="label">Offline Songs</span><span class="badge" id="menuDlCount">0</span></button>
+          <hr>
+          <div class="menu-section">App</div>
+          <button class="menu-item" data-menu="refresh"><span class="icon">🔄</span><span class="label">Refresh</span></button>
+          <button class="menu-item" data-menu="about"><span class="icon">ℹ️</span><span class="label">About</span></button>
+          <hr>
+          <button class="menu-item danger" data-menu="clear"><span class="icon">🗑️</span><span class="label">Clear All Data</span></button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -272,16 +306,18 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       </div>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-tab="trending">🔥 Trending</button>
-      <button class="tab" data-tab="electronic">🎛️ Electronic</button>
-      <button class="tab" data-tab="lofi">🎧 Lo-fi</button>
-      <button class="tab" data-tab="chill">🌙 Chill</button>
-      <button class="tab" data-tab="hiphop">🎤 Hip-hop</button>
-      <button class="tab" data-tab="pop">🎵 Pop</button>
-      <button class="tab" data-tab="rock">🎸 Rock</button>
-      <button class="tab" data-tab="playlist">📋 Playlist<span class="tab-count" id="plCount">0</span></button>
-      <button class="tab" data-tab="downloads">⬇️ Offline<span class="tab-count" id="dlCount">0</span></button>
+    <div class="tabs-wrap">
+      <div class="tabs">
+        <button class="tab active" data-tab="trending">🔥 Trending</button>
+        <button class="tab" data-tab="electronic">🎛️ Electronic</button>
+        <button class="tab" data-tab="lofi">🎧 Lo-fi</button>
+        <button class="tab" data-tab="chill">🌙 Chill</button>
+        <button class="tab" data-tab="hiphop">🎤 Hip-hop</button>
+        <button class="tab" data-tab="pop">🎵 Pop</button>
+        <button class="tab" data-tab="rock">🎸 Rock</button>
+        <button class="tab" data-tab="playlist">📋 Playlist<span class="tab-count" id="plCount">0</span></button>
+        <button class="tab" data-tab="downloads">⬇️ Offline<span class="tab-count" id="dlCount">0</span></button>
+      </div>
     </div>
 
     <div class="section-h">
@@ -1144,8 +1180,32 @@ $('refreshBtn').onclick = () => {
   loadTab(activeTab).finally(() => setTimeout(() => $('refreshBtn').classList.remove('loading'), 400));
 };
 
-// About modal
-$('aboutBtn').onclick = () => { updateStats(); updateDlCount(); $('aboutModal').classList.add('show'); };
+// Dropdown menu (3-dot)
+$('menuBtn').onclick = (e) => {
+  e.stopPropagation();
+  const isOpen = $('menuDropdown').classList.contains('show');
+  // Update counts before showing
+  $('menuPlCount').textContent = playlist.length;
+  dlList().then(list => $('menuDlCount').textContent = list.length);
+  if (isOpen) $('menuDropdown').classList.remove('show');
+  else $('menuDropdown').classList.add('show');
+};
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown')) $('menuDropdown').classList.remove('show');
+});
+// Dropdown menu actions
+document.querySelectorAll('[data-menu]').forEach(btn => {
+  btn.onclick = () => {
+    const action = btn.dataset.menu;
+    $('menuDropdown').classList.remove('show');
+    if (action === 'playlist') loadTab('playlist');
+    else if (action === 'downloads') loadTab('downloads');
+    else if (action === 'refresh') $('refreshBtn').click();
+    else if (action === 'about') { updateStats(); updateDlCount(); $('aboutModal').classList.add('show'); }
+    else if (action === 'clear') $('clearDataBtn').click();
+  };
+});
 $('aboutClose').onclick = () => $('aboutModal').classList.remove('show');
 $('aboutModal').onclick = e => { if (e.target === $('aboutModal')) $('aboutModal').classList.remove('show'); };
 $('clearDataBtn').onclick = async () => {
