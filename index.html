@@ -61,7 +61,8 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 @media(max-width:640px){.cards{grid-template-columns:repeat(2,1fr);gap:12px}}
 .card{background:var(--bg3);border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .card:hover{background:var(--bg4);transform:translateY(-2px)}
-.card-art{width:100%;aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);margin-bottom:10px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.card-art{width:100%;aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#ff4d6d,#c9184a 50%,#800f2f);margin-bottom:10px;object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3);position:relative}
+.card-art-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:rgba(255,255,255,.5);pointer-events:none}
 .card-name{font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
 .card-artist{color:var(--text2);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-play{position:absolute;bottom:54px;right:14px;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;border:0;font-size:.9rem;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(8px);transition:all .2s;box-shadow:0 6px 16px rgba(0,0,0,.5);cursor:pointer}
@@ -69,19 +70,26 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .card-dur{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.7);color:#fff;padding:3px 8px;border-radius:8px;font-size:.7rem;font-weight:600;backdrop-filter:blur(8px)}
 
 .list{padding:0 20px 20px}
-.list-head{display:grid;grid-template-columns:36px 1fr 1fr 60px 50px;gap:12px;padding:0 12px 8px;color:var(--text3);font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.list-head{display:grid;grid-template-columns:36px 44px 1fr 60px 50px;gap:12px;padding:0 12px 8px;color:var(--text3);font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);margin-bottom:6px}
 .list-head .col-num{text-align:center}
+.list-head .col-art{padding-left:0}
 .list-head .col-dur{text-align:right}
-.row{display:grid;grid-template-columns:36px 1fr 1fr 60px 50px;gap:12px;align-items:center;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s}
+.row{display:grid;grid-template-columns:36px 44px 1fr 60px 50px;gap:12px;align-items:center;padding:8px 12px;border-radius:8px;cursor:pointer;transition:background .15s}
 .row:hover{background:var(--bg3)}
 .row .num{color:var(--text3);text-align:center;font-variant-numeric:tabular-nums}
-.row .name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row .artist{color:var(--text2);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row .dur{color:var(--text3);font-size:.8rem;text-align:right;font-variant-numeric:tabular-nums}
-.row .play-btn{background:var(--accent);color:#fff;border:0;width:32px;height:32px;border-radius:50%;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:auto}
+.row-art{width:44px;height:44px;border-radius:6px;background:linear-gradient(135deg,#ff4d6d,#c9184a);object-fit:cover;flex-shrink:0;position:relative;overflow:hidden}
+.row-art-fb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:rgba(255,255,255,.6);pointer-events:none}
+.row-info{min-width:0;overflow:hidden}
+.row .name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.row .artist{color:var(--text2);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.row .dur{color:var(--text3);font-size:.78rem;text-align:right;font-variant-numeric:tabular-nums}
+.row .play-btn{background:var(--accent);color:#fff;border:0;width:34px;height:34px;border-radius:50%;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:auto;transition:all .15s}
+.row .play-btn:hover{transform:scale(1.08)}
+.row .row-act{background:transparent;border:0;color:var(--text3);font-size:.95rem;cursor:pointer;padding:6px;border-radius:50%;transition:all .15s}
+.row .row-act:hover{color:var(--accent);background:rgba(255,77,109,.1)}
 .row.playing{background:var(--bg3)}
 .row.playing .num,.row.playing .name{color:var(--accent)}
-@media(max-width:640px){.list-head,.row{grid-template-columns:32px 1fr 50px;gap:10px}.list-head .col-alb,.row .artist,.list-head .col-dur,.row .dur{display:none}}
+@media(max-width:640px){.list-head,.row{grid-template-columns:32px 40px 1fr 50px;gap:10px;padding:7px 8px}.list-head .col-dur,.row .dur{display:none}.row-art{width:40px;height:40px;border-radius:5px}}
 
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:10000;padding:20px}
 .modal-bg.show{display:flex}
@@ -109,7 +117,8 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .player::before{content:'';position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
 @media(max-width:640px){.player{grid-template-columns:1fr 1fr;gap:8px;padding:6px 8px 8px}}
 .np{display:flex;align-items:center;gap:10px;min-width:0;padding:4px;border-radius:8px}
-.np-art{width:44px;height:44px;border-radius:6px;background:linear-gradient(135deg,#2a2a3e,#1a1a2e);object-fit:cover;flex-shrink:0}
+.np-art{width:44px;height:44px;border-radius:6px;background:linear-gradient(135deg,#ff4d6d,#c9184a);object-fit:cover;flex-shrink:0;position:relative}
+.np-art-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:rgba(255,255,255,.6);pointer-events:none}
 .np-info{min-width:0;flex:1}
 .np-title{font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .np-artist{color:var(--text2);font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -468,7 +477,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
     </div>
 
-    <div class="about-row"><span class="label">Versi</span><span class="value">v9.4</span></div>
+    <div class="about-row"><span class="label">Versi</span><span class="value">v9.5 • 22 Juni 2026</span></div>
     <div class="about-row"><span class="label">Developer</span><span class="value">YANZYAHA</span></div>
     <div class="about-row"><span class="label">Powered by</span><span class="value">Audius + YouTube</span></div>
     <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML</span></div>
@@ -911,15 +920,15 @@ function renderList(tracks, opts = {}) {
     return;
   }
   $('content').className = 'list';
-  $('content').innerHTML = `<div class="list-head"><div class="col-num">#</div><div>Judul</div><div class="col-alb">Artis</div><div class="col-dur">⏱</div><div></div></div>` +
+  $('content').innerHTML = `<div class="list-head"><div class="col-num">#</div><div class="col-art"></div><div>Judul</div><div class="col-dur">⏱</div><div></div></div>` +
     tracks.map((t, i) => {
       const isPlaying = cur >= 0 && playlist[cur]?.id === t.id && !audio.paused;
       const inPl = playlist.some(p => p.id === t.id);
       return `
       <div class="row${isPlaying ? ' playing' : ''}" data-id="${t.id}">
         <div class="num">${isPlaying ? eqHTML(true) : (i+1)}</div>
-        <div class="name">${esc(t.title)}</div>
-        <div class="artist">${esc(t.artist)}</div>
+        <div class="row-art" style="background-image:url('${esc(t.artwork || '')}')"><div class="row-art-fb">🎵</div></div>
+        <div class="row-info"><div class="name">${esc(t.title)}</div><div class="artist">${esc(t.artist)}</div></div>
         <div class="dur">${fmtTime(t.duration)}</div>
         <div style="display:flex;gap:2px;justify-content:flex-end">
           <button class="row-dl" data-act="dlOne" data-id="${t.id}" title="Download">⬇</button>
@@ -980,15 +989,15 @@ async function renderDownloadsTab() {
     return;
   }
   $('content').className = 'list';
-  $('content').innerHTML = `<div class="list-head"><div class="col-num">#</div><div>Judul</div><div class="col-alb">Artis</div><div class="col-dur">⏱</div><div></div></div>` +
+  $('content').innerHTML = `<div class="list-head"><div class="col-num">#</div><div class="col-art"></div><div>Judul</div><div class="col-dur">⏱</div><div></div></div>` +
     dl.map((t, i) => {
       const isPlaying = cur >= 0 && playlist[cur]?.id === t.id && !audio.paused;
       const sizeMB = t._size ? (t._size / 1024 / 1024).toFixed(1) : '?';
       return `
       <div class="row${isPlaying ? ' playing' : ''}" data-id="${t.id}">
         <div class="num">${isPlaying ? eqHTML(true) : (i+1)}</div>
-        <div class="name">${esc(t.title)}</div>
-        <div class="artist">${esc(t.artist)} <span style="color:#4ade80;font-size:.7rem">• ${sizeMB}MB</span></div>
+        <div class="row-art" style="background-image:url('${esc(t.artwork || '')}')"><div class="row-art-fb">🎵</div></div>
+        <div class="row-info"><div class="name">${esc(t.title)}</div><div class="artist">${esc(t.artist)}<span style="color:#4ade80;font-size:.7rem;margin-left:4px">• ${sizeMB}MB</span></div></div>
         <div class="dur">${fmtTime(t.duration)}</div>
         <div style="display:flex;gap:2px;justify-content:flex-end">
           <button class="row-act" data-act="dlRemove" data-id="${t.id}" title="Hapus offline">🗑</button>
@@ -1002,10 +1011,15 @@ async function renderDownloadsTab() {
 async function downloadTrack(track) {
   if (!track) { toast('Track ga valid'); return; }
 
+  // Skip if already downloaded (check by stored blob)
+  if (track.id && track.id.startsWith('audius-')) {
+    const existing = await dlGet(track.id);
+    if (existing?._blob) { toast('Sudah offline ✓'); return; }
+  }
+
   // Ensure we have a valid stream URL (refresh if expired)
   let streamUrl = track.streamUrl;
   if (!streamUrl || streamUrl.includes('signature=')) {
-    // Fetch fresh from API
     try {
       const r = await fetch(`${AUDIUS}/v1/tracks/${track.audiusId}?app_name=aimusic`);
       if (r.ok) {
@@ -1014,11 +1028,9 @@ async function downloadTrack(track) {
           streamUrl = data.data[0].stream.url;
         }
       }
-    } catch (e) { /* ignore, use original */ }
+    } catch (e) { /* ignore */ }
   }
-  // Final fallback: construct URL
   if (!streamUrl && track.audiusId) streamUrl = getStreamUrl(track.audiusId);
-
   if (!streamUrl) { toast('Track tidak punya stream URL'); return; }
 
   toast('⬇️ Mendownload...');
@@ -1026,11 +1038,14 @@ async function downloadTrack(track) {
     const r = await fetch(streamUrl);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const blob = await r.blob();
-    const objUrl = URL.createObjectURL(blob);
+    if (blob.size < 1000) throw new Error('File terlalu kecil (' + blob.size + 'B), stream mungkin rusak');
+
+    // Save BLOB itself (persistent across refreshes), NOT blob URL
     const data = {
       ...track,
-      _blobUrl: objUrl,
+      _blob: blob,
       _size: blob.size,
+      _type: blob.type || 'audio/mpeg',
       _downloadedAt: Date.now(),
     };
     await dlSave(data);
@@ -1188,13 +1203,16 @@ async function playTrackV7(track) {
   $('ytMini').classList.remove('show');
   $('ytFrame').src = '';
 
-  // Check offline first
+  // Check offline first - RECREATE blob URL from stored blob (persistent)
   let streamUrl = null;
   if (track.id && track.id.startsWith('audius-')) {
     const offline = await dlGet(track.id);
-    if (offline?._blobUrl) {
+    if (offline?._blob) {
+      streamUrl = URL.createObjectURL(offline._blob);
+      console.log('Playing offline blob (' + Math.round((offline._size||0)/1024) + 'KB)');
+    } else if (offline?._blobUrl) {
+      // Legacy format migration: convert to blob if possible (else use old URL)
       streamUrl = offline._blobUrl;
-      console.log('Playing from offline cache');
     }
   }
   // Refresh signed URL if expired (older than 30 min)
@@ -1510,7 +1528,7 @@ updateDlCount();
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:10px 18px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✓ Updated to v9.4 — About page fixed + GitHub button!';
+    b.innerHTML = '✓ Updated to v9.5 — download fixed, UI rapi! — About page fixed + GitHub button!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
