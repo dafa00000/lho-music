@@ -754,7 +754,6 @@ $('npArt').onerror = () => { $('npArt').src = ''; };
 function showModal() { $('modal').classList.add('show'); $('urlInput').focus(); }
 function hideModal() { $('modal').classList.remove('show'); $('urlInput').value = ''; }
 $('pasteBtn').onclick = showModal;
-$('pasteBtn2').onclick = showModal;
 $('modalCancel').onclick = hideModal;
 $('modal').onclick = e => { if (e.target === $('modal')) hideModal(); };
 $('modalOk').onclick = () => {
