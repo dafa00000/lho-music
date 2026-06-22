@@ -261,6 +261,8 @@ function norm(t) {
     art: bestArt(t),
     playCount: t.play_count || 0,
     audiusId: t.id,
+    streamUrl: t.stream?.url || null,
+    isStreamable: t.is_streamable !== false && t.is_available !== false,
   };
 }
 
@@ -395,14 +397,24 @@ async function playTrack(track) {
   // Close YT overlay if open
   $('ytMini').classList.remove('show');
   $('ytFrame').src = '';
-  
-  // Get stream URL & play
-  const streamUrl = getStreamUrl(track.audiusId);
+
+  // Get stream URL (pre-signed from API, or construct fallback)
+  const streamUrl = track.streamUrl || getStreamUrl(track.audiusId);
+  if (!streamUrl) { toast('Track tidak bisa diputar'); return; }
+
+  // Check if non-streamable
+  if (track.isStreamable === false) {
+    toast('Track ini tidak tersedia untuk streaming');
+    return;
+  }
+
+  // Set src & play
   audio.src = streamUrl;
-  
+
   try {
     await audio.play();
   } catch (e) {
+    console.error('Audio play failed:', e);
     toast('Gagal play - coba lagi');
     return;
   }
