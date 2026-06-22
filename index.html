@@ -477,7 +477,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
     </div>
 
-    <div class="about-row"><span class="label">Versi</span><span class="value">v9.5 • 22 Juni 2026</span></div>
+    <div class="about-row"><span class="label">Versi</span><span class="value">v9.6 • 22 Juni 2026</span></div>
     <div class="about-row"><span class="label">Developer</span><span class="value">YANZYAHA</span></div>
     <div class="about-row"><span class="label">Powered by</span><span class="value">Audius + YouTube</span></div>
     <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML</span></div>
@@ -1017,35 +1017,53 @@ async function downloadTrack(track) {
     if (existing?._blob) { toast('Sudah offline ✓'); return; }
   }
 
-  // Ensure we have a valid stream URL (refresh if expired)
-  let streamUrl = track.streamUrl;
-  if (!streamUrl || streamUrl.includes('signature=')) {
-    try {
-      const r = await fetch(`${AUDIUS}/v1/tracks/${track.audiusId}?app_name=aimusic`);
-      if (r.ok) {
-        const data = await r.json();
-        if (data.data?.[0]?.stream?.url) {
-          streamUrl = data.data[0].stream.url;
-        }
-      }
-    } catch (e) { /* ignore */ }
+  // Need audiusId to look up the track
+  let audiusId = track.audiusId;
+  if (!audiusId && track.id && track.id.startsWith('audius-')) {
+    audiusId = track.id.replace('audius-', '');
   }
-  if (!streamUrl && track.audiusId) streamUrl = getStreamUrl(track.audiusId);
-  if (!streamUrl) { toast('Track tidak punya stream URL'); return; }
+  if (!audiusId) {
+    console.error('No audiusId on track:', track);
+    toast('❌ Track tidak punya ID Audius');
+    return;
+  }
 
   toast('⬇️ Mendownload...');
   try {
-    const r = await fetch(streamUrl);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const blob = await r.blob();
-    if (blob.size < 1000) throw new Error('File terlalu kecil (' + blob.size + 'B), stream mungkin rusak');
+    // Step 1: Get fresh track metadata with stream URL
+    const metaR = await fetch(`${AUDIUS}/v1/tracks/${audiusId}?app_name=aimusic`);
+    if (!metaR.ok) throw new Error('API ' + metaR.status);
+    const meta = await metaR.json();
+    const t = meta.data;
+    if (!t) throw new Error('Track ga ketemu di Audius');
 
-    // Save BLOB itself (persistent across refreshes), NOT blob URL
+    // Check if streamable
+    if (t.is_streamable === false || t.is_available === false) {
+      throw new Error('Track tidak tersedia untuk streaming');
+    }
+
+    // Step 2: Get the actual stream URL from API response
+    let streamUrl = t.stream?.url;
+    if (!streamUrl) throw new Error('API ga kasih stream URL');
+
+    // Step 3: Fetch the actual audio
+    const audioR = await fetch(streamUrl);
+    if (!audioR.ok) throw new Error('Stream HTTP ' + audioR.status);
+    const blob = await audioR.blob();
+    if (blob.size < 1000) throw new Error('File terlalu kecil (' + blob.size + 'B), stream rusak');
+
+    // Step 4: Save BLOB persistently
     const data = {
       ...track,
+      audiusId,
+      title: track.title || t.title || 'Unknown',
+      artist: track.artist || t.user?.name || 'Unknown',
+      art: track.art || bestArt(t),
+      duration: track.duration || t.duration || 0,
       _blob: blob,
       _size: blob.size,
       _type: blob.type || 'audio/mpeg',
+      _streamUrl: streamUrl,
       _downloadedAt: Date.now(),
     };
     await dlSave(data);
@@ -1196,42 +1214,67 @@ async function loadTab(tab) {
   }
 }
 
-// Updated playTrack: use offline blob if available, refresh expired URL, count plays
+// Updated playTrack: use offline blob if available, fresh API lookup for stream URL
 async function playTrackV7(track) {
   if (!track) return;
   // Close YT overlay
   $('ytMini').classList.remove('show');
   $('ytFrame').src = '';
 
-  // Check offline first - RECREATE blob URL from stored blob (persistent)
   let streamUrl = null;
+
+  // 1. Try offline blob first (persistent across refreshes)
   if (track.id && track.id.startsWith('audius-')) {
     const offline = await dlGet(track.id);
     if (offline?._blob) {
       streamUrl = URL.createObjectURL(offline._blob);
       console.log('Playing offline blob (' + Math.round((offline._size||0)/1024) + 'KB)');
-    } else if (offline?._blobUrl) {
-      // Legacy format migration: convert to blob if possible (else use old URL)
-      streamUrl = offline._blobUrl;
     }
   }
-  // Refresh signed URL if expired (older than 30 min)
-  if (!streamUrl && track.streamUrl && (!track._streamFetchedAt || Date.now() - track._streamFetchedAt > 30 * 60 * 1000)) {
+
+  // 2. Need audiusId for API lookup
+  let audiusId = track.audiusId;
+  if (!audiusId && track.id && track.id.startsWith('audius-')) {
+    audiusId = track.id.replace('audius-', '');
+  }
+
+  // 3. If no offline, fetch fresh stream URL from API
+  if (!streamUrl && audiusId) {
     try {
-      const r = await fetch(`${AUDIUS}/v1/tracks/${track.audiusId}?app_name=aimusic`);
+      const r = await fetch(`${AUDIUS}/v1/tracks/${audiusId}?app_name=aimusic`);
       if (r.ok) {
         const data = await r.json();
-        if (data.data?.[0]?.stream?.url) {
-          streamUrl = data.data[0].stream.url;
+        const t = data.data;
+        if (t && t.stream?.url) {
+          streamUrl = t.stream.url;
           track.streamUrl = streamUrl;
           track._streamFetchedAt = Date.now();
+          // Update fields from API
+          track.title = track.title || t.title || 'Unknown';
+          track.artist = track.artist || t.user?.name || 'Unknown';
+          track.art = track.art || bestArt(t);
+          track.duration = track.duration || t.duration || 0;
+        }
+        if (t?.is_streamable === false || t?.is_available === false) {
+          toast('Track tidak tersedia untuk streaming');
+          skipToNext();
+          return;
         }
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      console.warn('API lookup failed:', e.message);
+    }
   }
-  if (!streamUrl) streamUrl = track.streamUrl || getStreamUrl(track.audiusId);
-  if (!streamUrl) { toast('Track tidak bisa diputar'); return; }
-  if (track.isStreamable === false) { toast('Track ini tidak tersedia untuk streaming'); skipToNext(); return; }
+
+  // 4. Fallback: use cached streamUrl if API failed
+  if (!streamUrl) streamUrl = track.streamUrl;
+
+  // 5. Last resort: NO getStreamUrl() — that returns a redirect endpoint, not a stream URL
+  if (!streamUrl) {
+    console.error('No stream URL for track:', track);
+    toast('❌ Track tidak bisa diputar (ga ada stream URL)');
+    return;
+  }
 
   audio.src = streamUrl;
 
@@ -1500,7 +1543,7 @@ if ('serviceWorker' in navigator) {
       if (url.hostname.includes('audius') || url.hostname.includes('youtube')) return; // don't cache streams
       e.respondWith(fetch(e.request).then(res => {
         const clone = res.clone();
-        caches.open('aimusic-v95').then(c => c.put(e.request, clone));
+        caches.open('aimusic-v96').then(c => c.put(e.request, clone));
         return res;
       }).catch(() => caches.match(e.request)));
     });
@@ -1528,7 +1571,7 @@ updateDlCount();
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:10px 18px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✓ Updated to v9.5 — download fixed, UI rapi! — About page fixed + GitHub button!';
+    b.innerHTML = '✓ Updated to v9.6 — robust API lookup + better errors! — About page fixed + GitHub button!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
