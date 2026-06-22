@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- v5.0-youtube-embed -->
+<!-- v5.2-youtube-nocookie -->
 <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Ai Music","short_name":"Ai","start_url":".","display":"standalone","background_color":"%23000","theme_color":"%23FF4D6D","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2040%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M48%2060v72a18%2018%200%201%200%2012%2016.6V85.5l72-21v57a18%2018%200%201%200%2012%2016.6V42z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22100%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M128%20160v192a48%2048%200%201%200%2032%2044.3V228l192-56v152a48%2048%200%201%200%2032%2044.3V112z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
 <style>
 :root{--accent:#FF4D6D;--accent2:#FF8FA3;--bg:#000;--bg2:#121212;--bg3:#1a1a1a;--bg4:#262626;--border:#282828;--text:#fff;--text2:#b3b3b3;--text3:#777}
@@ -112,12 +112,13 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 .btn-ghost:hover{color:#fff}
 
 /* YOUTUBE PLAYER OVERLAY (full screen) */
-.yt-overlay{position:fixed;inset:0;background:#000;z-index:200;display:none;flex-direction:column}
-.yt-overlay.show{display:flex}
-.yt-header{padding:12px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(0,0,0,.5));position:absolute;top:0;left:0;right:0;z-index:2}
-.yt-header .yt-title{flex:1;font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.yt-header button{background:rgba(255,255,255,.15);border:0;color:#fff;width:36px;height:36px;border-radius:50%;font-size:1.2rem;cursor:pointer}
-.yt-frame{flex:1;width:100%;height:100%;border:0}
+.yt-mini{display:none;margin:16px 20px;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 12px 32px rgba(0,0,0,.5);position:relative;animation:slideUp .3s ease}
+.yt-mini.show{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.yt-mini-frame{width:100%;aspect-ratio:16/9;border:0;display:block;background:#000}
+.yt-mini-bar{position:absolute;top:10px;left:10px;right:10px;display:flex;align-items:center;gap:8px;z-index:2;pointer-events:none}
+.yt-mini-bar .yt-mini-title{flex:1;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto}
+.yt-mini-bar button{background:rgba(0,0,0,.7);backdrop-filter:blur(10px);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;pointer-events:auto;flex-shrink:0}
 
 /* BOTTOM PLAYER (mini) */
 .player{background:linear-gradient(180deg,transparent,rgba(0,0,0,.95) 30%);padding:6px 14px 10px;display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;align-items:center;flex-shrink:0;position:relative;z-index:5}
@@ -215,7 +216,8 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
 <div class="modal-bg" id="modal">
   <div class="modal">
     <h3>🎵 Putar dari YouTube</h3>
-    <p>Paste URL video YouTube → play full song. Cari di YouTube: <em>nama artis - judul lagu (audio)</em></p>
+    <p>Paste URL YouTube → play full song (no 30 detik limit). Cari di YouTube: <em>artis - judul lagu (official audio) (audio only)</em></p>
+<small style="color:#777;font-size:.75rem;display:block;margin-top:-8px">💡 Pilih video "Topic" atau "Audio" biar tanpa klip video. Ad YouTube ~15-30 detik di awal = normal.</small>
     <input id="urlInput" placeholder="https://www.youtube.com/watch?v=..." />
     <div class="modal-btns">
       <button class="btn btn-ghost" id="modalCancel">Batal</button>
@@ -224,13 +226,14 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
   </div>
 </div>
 
-<!-- YouTube fullscreen player -->
-<div class="yt-overlay" id="ytOverlay">
-  <div class="yt-header">
-    <div class="yt-title" id="ytTitle">Playing...</div>
-    <button id="ytClose" title="Tutup">✕</button>
+<!-- YouTube inline mini player -->
+<div class="yt-mini" id="ytMini">
+  <div class="yt-mini-bar">
+    <div class="yt-mini-title" id="ytTitle">Playing...</div>
+    <button id="ytMinimize" title="Sembunyikan video (audio tetap jalan)">▾</button>
+    <button id="ytClose" title="Berhenti">✕</button>
   </div>
-  <iframe id="ytFrame" class="yt-frame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <iframe id="ytFrame" class="yt-mini-frame" allow="autoplay; encrypted-media" playsinline></iframe>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -297,7 +300,9 @@ function getYouTubeId(url) {
 }
 
 function ytUrl(id) {
-  return `https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&rel=0`;
+  // youtube-nocookie.com has fewer restrictions than youtube.com/embed
+  // Added: enablejsapi (for control), playsinline (no fullscreen on iOS)
+  return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&modestbranding=1&rel=0&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
 }
 function ytSearchUrl(query) {
   return `https://www.youtube.com/results?search_query=${query}`;
@@ -306,7 +311,8 @@ function ytSearchUrl(query) {
 function playYouTube(id, title) {
   $('ytFrame').src = ytUrl(id);
   $('ytTitle').textContent = title || 'YouTube';
-  $('ytOverlay').classList.add('show');
+  $('ytMini').classList.add('show');
+  $('ytMini').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   // Update hero + player UI
   $('heroEyebrow').textContent = 'SEKARANG DIPUTAR';
   $('heroTitle').textContent = title || 'YouTube';
@@ -319,9 +325,27 @@ function playYouTube(id, title) {
 }
 
 $('ytClose').onclick = () => {
-  $('ytOverlay').classList.remove('show');
+  $('ytMini').classList.remove('show');
   $('ytFrame').src = '';
   $('playBtn').textContent = '▶';
+  $('npTitle').textContent = '—';
+  $('npArtist').textContent = 'Pilih lagu';
+  $('heroEyebrow').textContent = 'Pilih lagu untuk mulai';
+  $('heroTitle').textContent = 'Belum ada yang diputar';
+  $('heroArtist').textContent = 'Search atau paste YouTube URL 🎵';
+};
+
+$('ytMinimize').onclick = () => {
+  // Hide video but keep iframe playing (audio continues if browser allows)
+  $('ytFrame').style.display = 'none';
+  $('ytMinimize').textContent = '▴';
+  $('ytMinimize').title = 'Tampilkan video';
+  $('ytMinimize').onclick = () => {
+    $('ytFrame').style.display = 'block';
+    $('ytMinimize').textContent = '▾';
+    $('ytMinimize').title = 'Sembunyikan video (audio tetap jalan)';
+    $('ytMinimize').onclick = arguments.callee;
+  };
 };
 
 // Render functions
@@ -452,7 +476,11 @@ document.addEventListener('click', e => {
 });
 
 $('playBtn').onclick = () => {
-  if ($('ytOverlay').classList.contains('show')) { $('ytClose').click(); return; }
+  // Toggle between HTML5 audio and YouTube iframe
+  if ($('ytMini').classList.contains('show')) {
+    $('ytClose').click();
+    return;
+  }
   if (audio.paused) audio.play(); else audio.pause();
 };
 audio.onplay = () => $('playBtn').textContent = '⏸';
@@ -460,7 +488,12 @@ audio.onpause = () => $('playBtn').textContent = '▶';
 audio.ontimeupdate = () => { if (audio.duration) {/* could show progress */} };
 audio.onended = () => { $('playBtn').textContent = '▶'; };
 
-$('np').onclick = () => { $('ytClose').click(); $('ytOverlay').classList.add('show'); };
+$('np').onclick = () => {
+  // Scroll to YT mini player if active
+  if ($('ytMini').classList.contains('show')) {
+    $('ytMini').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+};
 
 // Paste URL
 function showModal() { $('modal').classList.add('show'); $('urlInput').focus(); }
