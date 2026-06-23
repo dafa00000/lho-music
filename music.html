@@ -294,7 +294,9 @@ async function doSearch() {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   $('main').innerHTML = '<div class="loading">Mencari "' + esc(q) + '"...</div>';
   try {
-    currentList = await fetchTracks(q);
+    const tracks = await fetchTracks(q);
+    currentList.length = 0;
+    currentList.push(...tracks);
     renderTracks(currentList);
   } catch (e) {
     debug('Search error: ' + e.message);
@@ -307,7 +309,9 @@ async function loadCategory(cat) {
   const q = GENRE_QUERIES[cat] || cat;
   $('main').innerHTML = '<div class="loading">Loading ' + esc(cat) + '...</div>';
   try {
-    currentList = await fetchTracks(q);
+    const tracks = await fetchTracks(q);
+    currentList.length = 0;
+    currentList.push(...tracks);
     renderTracks(currentList);
   } catch (e) {
     debug('Load error: ' + e.message);
