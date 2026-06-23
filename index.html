@@ -456,7 +456,7 @@ body{background:#000;color:#fff;overflow:hidden;font-size:14px}
       <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
     </div>
 
-    <div class="about-row"><span class="label">Versi</span><span class="value">v10.0 • 22 Juni 2026</span></div>
+    <div class="about-row"><span class="label">Versi</span><span class="value">v10.1 • 22 Juni 2026</span></div>
     <div class="about-row"><span class="label">Developer</span><span class="value">YANZYAHA</span></div>
     <div class="about-row"><span class="label">Powered by</span><span class="value">Deezer + YouTube</span></div>
     <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML</span></div>
@@ -1577,7 +1577,7 @@ if ('serviceWorker' in navigator) {
       if (url.hostname.includes('deezer') || url.hostname.includes('ytimg') || url.hostname.includes('youtube')) return; // don't cache streams
       e.respondWith(fetch(e.request).then(res => {
         const clone = res.clone();
-        caches.open('aimusic-v100').then(c => c.put(e.request, clone));
+        caches.open('aimusic-v101').then(c => c.put(e.request, clone));
         return res;
       }).catch(() => caches.match(e.request)));
     });
@@ -1585,11 +1585,14 @@ if ('serviceWorker' in navigator) {
   const swBlob = new Blob([swCode], { type: 'application/javascript' });
   const swUrl = URL.createObjectURL(swBlob);
   navigator.serviceWorker.register(swUrl).catch(() => {});
-  // Also unregister any old service workers from previous versions
+  // Force-unregister ANY old service workers + clear ALL caches to bust stale code
   if (navigator.serviceWorker.getRegistrations) {
     navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(reg => { if (reg.active && !reg.active.scriptURL.includes(swUrl)) reg.unregister(); });
+      regs.forEach(reg => reg.unregister());
     });
+  }
+  if (window.caches) {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
   }
 }
 
@@ -1599,13 +1602,13 @@ updateDlCount();
 
 // Version banner — shows once per session to confirm latest version
 (function showVersionBanner(){
-  const KEY = 'aimusic_vbanner_91';
+  const KEY = 'aimusic_vbanner_101';
   if (sessionStorage.getItem(KEY)) return;
   sessionStorage.setItem(KEY, '1');
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:10px 18px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✓ Updated to v10.0 — Deezer + YouTube! — About page fixed + GitHub button!';
+    b.innerHTML = '✓ Updated to v10.1 — fixed SW cache bust! — About page fixed + GitHub button!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
