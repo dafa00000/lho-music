@@ -1433,8 +1433,10 @@ $('repeatBtn').onclick = () => {
   $('repeatBtn').style.color = repeatOn ? 'var(--accent)' : '';
   toast(repeatOn ? '🔁 Repeat ON' : 'Repeat OFF');
 };
-$('shuffleBtn').style.color = shuffleOn ? 'var(--accent)' : '';
-$('repeatBtn').style.color = repeatOn ? 'var(--accent)' : '';
+try {
+  $('shuffleBtn').style.color = (typeof shuffleOn !== 'undefined' && shuffleOn) ? 'var(--accent)' : '';
+  $('repeatBtn').style.color = (typeof repeatOn !== 'undefined' && repeatOn) ? 'var(--accent)' : '';
+} catch(e) { console.warn('Button color init failed:', e.message); }
 $('volSlider').oninput = e => { audio.volume = e.target.value / 100; $('volIcon').textContent = audio.volume === 0 ? '🔇' : audio.volume < 0.5 ? '🔉' : '🔊'; };
 audio.volume = $('volSlider').value / 100;
 
