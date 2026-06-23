@@ -674,13 +674,13 @@ async function doSearch() {
   const q = $('q').value.trim();
   if (!q) { loadTab('home'); return; }
   $('sectionH').textContent = `Hasil: "${q}"`;
-  $('content').innerHTML = '<div class="empty">Mencari di Audius...</div>';
+  $('content').innerHTML = '<div class="empty">Mencari di Deezer...</div>';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   try {
     const tracks = await deezerSearch(q);
     currentList = tracks;
     if (tracks.length) renderList(tracks);
-    else $('content').innerHTML = '<div class="empty"><h3>Tidak ada di Audius</h3><small>Untuk lagu mainstream original, paste URL YouTube (klik icon 📋)</small></div>';
+    else $('content').innerHTML = '<div class="empty"><h3>Tidak ada hasil</h3><small>Untuk lagu mainstream original, paste URL YouTube (klik icon 📋)</small></div>';
   } catch (e) {
     $('content').innerHTML = '<div class="empty"><h3>Error</h3><p>' + esc(e.message) + '</p></div>';
   }
@@ -1372,7 +1372,6 @@ function updatePlayingState(track) {
 }
 
 // Replace old playTrack
-playTrack = playTrackV7;
 
 // Audio event hooks (override)
 audio.onplay = () => {
