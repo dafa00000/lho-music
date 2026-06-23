@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#000;--bg2:#14141a;--bg3:#1f1f28;--text:#fff;--text2:#a0a0b0;--accent:#ff4d6d}
+:root{--bg:#000;--bg2:#14141a;--bg3:#1f1f28;--text:#fff;--text2:#a0a0b0;--accent:#ff4d6d;--err:#fbbf24}
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
 body{background:var(--bg);color:var(--text);display:flex;flex-direction:column}
 header{padding:14px 16px 8px;flex-shrink:0}
@@ -59,12 +59,14 @@ main::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
 .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 18px;border-radius:500px;font-weight:600;font-size:.82rem;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:90%;text-align:center}
 .toast.show{opacity:1}
 .loading{text-align:center;padding:40px;color:var(--text2)}
-.section-title{font-size:.7rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;padding:16px 0 8px}
+.retry-btn{margin-top:14px;padding:10px 20px;background:var(--accent);color:#fff;border:0;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer}
+.debug{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.9);color:var(--err);padding:8px 14px;border-radius:8px;font-size:.7rem;z-index:250;max-width:90%;font-family:monospace;display:none}
+.debug.show{display:block}
 </style>
 </head>
 <body>
 <header>
-<h1>Music<span class="version" id="version">v12.0</span></h1>
+<h1>Music<span class="version" id="version">v13.0</span></h1>
 </header>
 <div class="search">
 <div class="search-box">
@@ -73,13 +75,13 @@ main::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
 </div>
 </div>
 <div class="chips" id="chips">
-<div class="chip active" data-cat="id-trending">🇮🇩 Trending ID</div>
-<div class="chip" data-cat="us-trending">🌍 Trending US</div>
+<div class="chip active" data-cat="trending">🔥 Trending</div>
 <div class="chip" data-cat="pop">🎵 Pop</div>
 <div class="chip" data-cat="hiphop">🎤 Hip-Hop</div>
 <div class="chip" data-cat="rnb">🎶 R&B</div>
 <div class="chip" data-cat="rock">🎸 Rock</div>
 <div class="chip" data-cat="dance">💃 Dance</div>
+<div class="chip" data-cat="indie">🌟 Indie</div>
 </div>
 <main id="main">
 <div class="loading" id="loading">Loading...</div>
@@ -101,6 +103,7 @@ main::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="debug" id="debug"></div>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -108,6 +111,7 @@ const audio = new Audio();
 audio.preload = 'metadata';
 let currentList = [];
 let cur = -1;
+let currentCat = 'trending';
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -121,48 +125,45 @@ function toast(msg, dur = 2000) {
   toast._t = setTimeout(() => t.classList.remove('show'), dur);
 }
 
-// === iTunes API ===
-// iTunes Search API + RSS feeds — both are CORS-enabled, work globally
-const ITUNES_SEARCH = 'https://itunes.apple.com/search';
-const ITUNES_RSS = 'https://rss.applemarketingtools.com/api/v2';
+function debug(msg, dur = 6000) {
+  const d = $('debug');
+  d.textContent = msg;
+  d.classList.add('show');
+  clearTimeout(debug._t);
+  debug._t = setTimeout(() => d.classList.remove('show'), dur);
+}
 
-// Genre search terms for iTunes (it doesn't have genre-specific charts, so we search popular terms)
-const GENRE_SEARCH = {
-  'pop': 'top pop hits 2024',
-  'hiphop': 'best hip hop songs',
-  'rnb': 'best r&b songs',
-  'rock': 'top rock songs',
-  'dance': 'best dance electronic music',
-  'id-trending': 'trending indonesia',
-  'us-trending': 'top hits america'
+// === iTunes Search API (only — most reliable, geo-friendly, CORS-enabled) ===
+const ITUNES = 'https://itunes.apple.com/search';
+
+// Genre search terms — iTunes doesn't have genre-specific charts,
+// but search with popular terms gives great results
+const GENRE_QUERIES = {
+  trending: 'top hits 2024',
+  pop: 'best pop songs 2024',
+  hiphop: 'best hip hop rap',
+  rnb: 'best r&b soul',
+  rock: 'best rock songs',
+  dance: 'best dance electronic',
+  indie: 'best indie alternative'
 };
 
 function normTrack(t) {
-  // iTunes RSS format vs search format differ slightly
   return {
-    id: 'it-' + (t.id || t.trackId),
-    title: t.name || t.trackName || 'Unknown',
+    id: 'it-' + t.trackId,
+    title: t.trackName || 'Unknown',
     artist: t.artistName || 'Unknown',
     duration: (t.trackTimeMillis ? t.trackTimeMillis/1000 : 30),
-    art: (t.artworkUrl100 || t.artworkUrl60 || '').replace('100x100bb', '300x300bb'),
+    art: (t.artworkUrl100 || '').replace('100x100bb', '300x300bb'),
     preview: t.previewUrl || null,
-    link: t.trackViewUrl || t.collectionViewUrl || null
+    link: t.trackViewUrl || null
   };
 }
 
-async function fetchRSS(region, type = 'most-played') {
-  // RSS feeds: rss.applemarketingtools.com/api/v2/{region}/music/{type}/30/songs.json
-  const url = `${ITUNES_RSS}/${region}/music/${type}/30/songs.json`;
+async function fetchTracks(query) {
+  const url = `${ITUNES}?term=${encodeURIComponent(query)}&media=music&entity=song&limit=30`;
   const r = await fetch(url);
-  if (!r.ok) throw new Error('iTunes RSS ' + r.status);
-  const data = await r.json();
-  return (data.feed?.results || []).map(normTrack);
-}
-
-async function fetchSearch(query) {
-  const url = `${ITUNES_SEARCH}?term=${encodeURIComponent(query)}&media=music&entity=song&limit=30`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('iTunes ' + r.status);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
   const data = await r.json();
   return (data.results || []).map(normTrack);
 }
@@ -171,7 +172,7 @@ async function fetchSearch(query) {
 function renderTracks(tracks) {
   const main = $('main');
   if (!tracks.length) {
-    main.innerHTML = '<div class="empty"><div class="icon">🎵</div><h3>Tidak ada hasil</h3><small>Coba kata kunci lain, atau pilih genre di atas</small></div>';
+    main.innerHTML = '<div class="empty"><div class="icon">🎵</div><h3>Tidak ada hasil</h3><small>Coba kata kunci lain, atau pilih kategori di atas</small></div>';
     return;
   }
   main.innerHTML = '<div class="grid">' + tracks.map((t, i) => `
@@ -186,6 +187,18 @@ function renderTracks(tracks) {
       </div>
     </div>
   `).join('') + '</div>';
+}
+
+function showError(msg, retry = null) {
+  $('main').innerHTML = `
+    <div class="empty">
+      <div class="icon">⚠️</div>
+      <h3>Gagal memuat</h3>
+      <small>${esc(msg)}</small>
+      ${retry ? `<button class="retry-btn" id="retryBtn">Coba Lagi</button>` : ''}
+    </div>
+  `;
+  if (retry) $('retryBtn').onclick = retry;
 }
 
 // === Playback ===
@@ -205,7 +218,7 @@ async function playIndex(i) {
   $('ytBtn').href = `https://www.youtube.com/results?search_query=${encodeURIComponent(t.title + ' ' + t.artist)}`;
 
   if (!t.preview) {
-    toast('❌ Preview tidak tersedia');
+    toast('❌ Preview tidak tersedia untuk lagu ini');
     return;
   }
 
@@ -221,10 +234,7 @@ async function playIndex(i) {
 }
 
 function togglePlay() {
-  if (cur < 0 && currentList.length) {
-    playIndex(0);
-    return;
-  }
+  if (cur < 0 && currentList.length) { playIndex(0); return; }
   if (audio.paused) {
     audio.play().catch(() => toast('Tap tombol untuk play'));
     $('playBtn').textContent = '⏸';
@@ -251,6 +261,10 @@ audio.addEventListener('play', () => { $('playBtn').textContent = '⏸'; });
 audio.addEventListener('pause', () => { $('playBtn').textContent = '▶'; });
 audio.addEventListener('timeupdate', () => {
   if (audio.duration) $('progressFill').style.width = (audio.currentTime / audio.duration * 100) + '%';
+});
+audio.addEventListener('error', (e) => {
+  console.warn('Audio error:', audio.error?.message);
+  toast('Audio error: ' + (audio.error?.message || 'unknown'));
 });
 
 // === Event handlers ===
@@ -280,34 +294,31 @@ async function doSearch() {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   $('main').innerHTML = '<div class="loading">Mencari "' + esc(q) + '"...</div>';
   try {
-    currentList = await fetchSearch(q);
+    currentList = await fetchTracks(q);
     renderTracks(currentList);
   } catch (e) {
-    $('main').innerHTML = '<div class="empty"><div class="icon">⚠️</div><h3>Error</h3><small>' + esc(e.message) + '</small></div>';
+    debug('Search error: ' + e.message);
+    showError('Gagal search: ' + e.message + '\nCoba refresh atau cek koneksi internet lo', doSearch);
   }
 }
 
 async function loadCategory(cat) {
+  currentCat = cat;
+  const q = GENRE_QUERIES[cat] || cat;
   $('main').innerHTML = '<div class="loading">Loading ' + esc(cat) + '...</div>';
   try {
-    if (cat === 'id-trending') {
-      currentList = await fetchRSS('id', 'most-played');
-    } else if (cat === 'us-trending') {
-      currentList = await fetchRSS('us', 'most-played');
-    } else {
-      // Genre-based via search
-      currentList = await fetchSearch(GENRE_SEARCH[cat] || cat);
-    }
+    currentList = await fetchTracks(q);
     renderTracks(currentList);
   } catch (e) {
-    $('main').innerHTML = '<div class="empty"><div class="icon">⚠️</div><h3>Error</h3><small>' + esc(e.message) + '<br>Coba refresh atau pilih kategori lain</small></div>';
+    debug('Load error: ' + e.message);
+    showError('Gagal load: ' + e.message + '\nCoba refresh halaman atau ganti kategori', () => loadCategory(cat));
   }
 }
 
 // === Init ===
-loadCategory('id-trending');
+loadCategory('trending');
 
-window._app = { playIndex, currentList, audio };
+window._app = { playIndex, currentList, audio, loadCategory };
 </script>
 </body>
 </html>
