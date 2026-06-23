@@ -1602,13 +1602,13 @@ updateDlCount();
 
 // Version banner — shows once per session to confirm latest version
 (function showVersionBanner(){
-  const KEY = 'aimusic_vbanner_101';
+  const KEY = 'aimusic_vbanner_130';
   if (sessionStorage.getItem(KEY)) return;
   sessionStorage.setItem(KEY, '1');
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:10px 18px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✓ Updated to v10.1 — fixed SW cache bust! — About page fixed + GitHub button!';
+    b.innerHTML = '✓ Updated to v13.0 — latest version deployed!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
