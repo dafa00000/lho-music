@@ -1,156 +1,308 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify – Web Player</title>
-    <style>
-        :root {
-            --bg-base: #000000;
-            --bg-surface: #121212;
-            --bg-card: #181818;
-            --bg-card-hover: #242424;
-            --text-main: #ffffff;
-            --text-sub: #a7a7a7;
-            --spotify-green: #1ed760;
-            --spotify-green-hover: #1fdf64;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: var(--bg-base); color: var(--text-main); display: grid; grid-template-columns: 260px 1fr; height: 100vh; overflow: hidden; }
-        
-        /* Sidebar Layout */
-        .sidebar { background-color: var(--bg-base); padding: 20px; display: flex; flex-direction: column; gap: 24px; border-right: 1px solid #282828; }
-        .logo { font-size: 24px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .logo span { color: var(--spotify-green); }
-        .nav-group { display: flex; flex-direction: column; gap: 16px; }
-        .menu-item { color: var(--text-sub); text-decoration: none; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
-        .menu-item:hover, .menu-item.active { color: var(--text-main); }
-        .divider { height: 1px; background-color: #282828; margin: 8px 0; }
-        .playlist-section { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; }
-
-        /* Main Content View */
-        .main-content { background: linear-gradient(to bottom, #1e1e1e, var(--bg-surface)); padding: 24px 32px; overflow-y: auto; padding-bottom: 140px; }
-        
-        /* Navbar Top Control */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 32px; position: sticky; top: 0; padding: 8px 0; z-index: 10; }
-        .search-container { position: relative; }
-        .search-box { background-color: #242424; border: 1px solid transparent; padding: 12px 20px; border-radius: 50px; width: 320px; font-size: 14px; outline: none; color: #fff; transition: 0.2s; }
-        .search-box:focus { border-color: #535353; background-color: #2a2a2a; }
-
-        h2 { font-size: 24px; font-weight: 700; margin-bottom: 18px; letter-spacing: -0.5px; }
-        
-        /* Grid Spotify Style */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; margin-bottom: 40px; }
-        .card { background-color: var(--bg-card); padding: 16px; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease; position: relative; }
-        .card:hover { background-color: var(--bg-card-hover); }
-        .card-img-wrapper { position: relative; width: 100%; aspect-ratio: 1; margin-bottom: 16px; }
-        .card img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        
-        /* Hover Play Button ala Spotify */
-        .play-btn-hover { position: absolute; bottom: 8px; right: 8px; width: 48px; height: 48px; background-color: var(--spotify-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(8px); transition: 0.3s ease; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
-        .card:hover .play-btn-hover { opacity: 1; transform: translateY(0); }
-        .play-btn-hover::after { content: ''; display: inline-block; width: 0; height: 0; border-style: solid; border-width: 8px 0 8px 14px; border-color: transparent transparent transparent #000; margin-left: 4px; }
-
-        .card .title { font-size: 16px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card .artist { font-size: 14px; color: var(--text-sub); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 20px; }
-        
-        /* Download Button Minimalist */
-        .btn-download { display: inline-block; margin-top: 12px; font-size: 12px; font-weight: 700; color: var(--text-main); text-decoration: none; border: 1px solid #727272; padding: 6px 12px; border-radius: 50px; transition: 0.2s; }
-        .btn-download:hover { border-color: #fff; transform: scale(1.04); }
-
-        /* Spotify Bottom Player Bar */
-        .player-bar { grid-column: 1 / -1; background-color: #000000; border-top: 1px solid #121212; height: 90px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; position: fixed; bottom: 0; width: 100%; z-index: 100; }
-        .current-track { display: flex; align-items: center; gap: 14px; width: 30%; min-width: 180px; }
-        .current-track img { width: 56px; height: 56px; border-radius: 4px; object-fit: cover; }
-        .track-info { overflow: hidden; }
-        .track-info .title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .track-info .artist { font-size: 11px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        /* Audio Controller Custom */
-        .audio-controls { width: 40%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .timeline-container { display: flex; align-items: center; width: 100%; gap: 8px; color: var(--text-sub); font-size: 11px; }
-        .progress-bar { flex: 1; -webkit-appearance: none; appearance: none; background: #4d4d4d; height: 4px; border-radius: 2px; outline: none; cursor: pointer; }
-        .progress-bar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; cursor: pointer; display: none; }
-        .progress-bar:hover::-webkit-slider-thumb { display: block; }
-        audio { display: none; } 
-
-        /* Custom Play/Pause Buttons bar */
-        .control-buttons { display: flex; align-items: center; gap: 24px; }
-        .control-icon { background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 18px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-        .control-icon:hover { color: var(--text-main); }
-        .play-trigger { width: 32px; height: 32px; background-color: #fff; color: #000; border-radius: 50%; font-size: 14px; }
-        .play-trigger:hover { transform: scale(1.06); color: #000; }
-
-        /* Responsive Mobile Layout */
-        @media (max-width: 768px) {
-            body { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
-            .main-content { padding: 16px; padding-bottom: 160px; }
-            .top-bar { flex-direction: column; align-items: stretch; margin-bottom: 20px; }
-            .search-box { width: 100%; }
-            .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-            .player-bar { flex-direction: column; height: auto; padding: 12px; gap: 12px; }
-            .current-track { width: 100%; justify-content: flex-start; }
-            .audio-controls { width: 100%; }
-            .mobile-hide { display: none; }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Sidebar Menu Khas Spotify -->
-    <div class="sidebar">
-        <div class="logo" onclick="filterCategory('all')"><span>🎧</span> Spotifree</div>
-        <div class="nav-group">
-            <a class="menu-item active" id="menu-all" onclick="filterCategory('all')">🏠 Home</a>
-            <a class="menu-item" id="menu-pop" onclick="filterCategory('Pop')">🎵 Pop Hits</a>
-            <a class="menu-item" id="menu-acc" onclick="filterCategory('Acoustic')">🎸 Acoustic Room</a>
-            <a class="menu-item" id="menu-chill" onclick="filterCategory('Chill')">☕ Chill Vibe</a>
-        </div>
-        <div class="divider"></div>
-        <div class="playlist-section">
-            <div style="font-size: 12px; color: var(--text-sub); font-weight: bold; letter-spacing: 1px;">PLAYLIST KAMU</div>
-            <a class="menu-item" onclick="filterCategory('all')">Semua Lagu Tanpa Login</a>
-        </div>
-    </div>
-
-    <!-- Main Content Panel -->
-    <div class="main-content">
-        <div class="top-bar">
-            <div class="search-container">
-                <input type="text" id="search-input" class="search-box" placeholder="Apa yang ingin kamu dengarkan?">
-            </div>
-        </div>
-
-        <h2 id="section-title">Koleksi Musik Terbaik</h2>
-        <div class="grid" id="playlist-grid"></div>
-    </div>
-
-    <!-- Bottom Controller Player Bar -->
-    <div class="player-bar">
-        <div class="current-track">
-            <img id="player-img" src="https://picsum.photos" alt="Cover">
-            <div class="track-info">
-                <div id="player-title" class="title">Pilih lagu di atas</div>
-                <div id="player-artist" class="artist">-</div>
-            </div>
-        </div>
-        
-        <div class="audio-controls">
-            <div class="control-buttons">
-                <button class="control-icon" onclick="playPrevious()">⏮</button>
-                <button class="control-icon play-trigger" id="play-btn" onclick="togglePlay()">▶</button>
-                <button class="control-icon" onclick="playNext()">⏭</button>
-            </div>
-            <div class="timeline-container">
-                <span id="time-current">0:00</span>
-                <input type="range" id="progress-bar" class="progress-bar" value="0" min="0" max="100">
-                <span id="time-total">0:00</span>
-            </div>
-            <audio id="main-audio" src=""></audio>
-        </div>
-        
-        <div class="mobile-hide" style="width: 30%;"></div>
-    </div>
-
-    <script>
+1|<!DOCTYPE html>
+2|<html lang="id">
+3|<head>
+4|<meta charset="UTF-8">
+5|<meta name="viewport" content="width=device-width, initial-scale=1.0">
+6|<title>Lho Music - Web Player</title>
+7|<style>
+8|:root{--bg-base:#000;--bg-surface:#121212;--bg-card:#181818;--bg-card-hover:#282828;--text-main:#fff;--text-sub:#a7a7a7;--green:#1ed760}
+9|*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+10|body{background:var(--bg-base);color:var(--text-main);display:grid;grid-template-columns:240px 1fr;height:100vh;overflow:hidden}
+11|
+12|/* Sidebar */
+13|.sidebar{background:var(--bg-base);padding:20px;display:flex;flex-direction:column;gap:20px;border-right:1px solid #282828}
+14|.logo{font-size:22px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px}
+15|.logo span{color:var(--green)}
+16|.nav-group{display:flex;flex-direction:column;gap:4px}
+17|.mi{color:var(--text-sub);text-decoration:none;font-size:14px;font-weight:700;cursor:pointer;padding:8px 12px;border-radius:6px;display:flex;align-items:center;gap:12px;transition:.2s}
+18|.mi:hover,.mi.active{color:var(--text-main);background:var(--bg-card)}
+19|.divider{height:1px;background:#282828;margin:8px 0}
+20|
+21|/* Main */
+22|.main{background:linear-gradient(180deg,#1e1e1e 0%,var(--bg-surface) 100%);padding:24px 32px;overflow-y:auto;padding-bottom:160px}
+23|.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+24|.search-box{background:#242424;border:1px solid transparent;padding:12px 20px;border-radius:50px;width:360px;font-size:14px;outline:none;color:#fff;transition:.2s}
+25|.search-box:focus{border-color:#535353;background:#2a2a2a}
+26|h2{font-size:24px;font-weight:700;margin-bottom:18px}
+27|.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:20px;margin-bottom:40px}
+28|
+29|/* Card */
+30|.card{background:var(--bg-card);padding:14px;border-radius:8px;cursor:pointer;transition:.3s;position:relative}
+31|.card:hover{background:var(--bg-card-hover)}
+32|.card-img{position:relative;width:100%;aspect-ratio:1;margin-bottom:12px}
+33|.card-img img{width:100%;height:100%;object-fit:cover;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+34|.play-overlay{position:absolute;bottom:8px;right:8px;width:46px;height:46px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(8px);transition:.3s;box-shadow:0 8px 16px rgba(0,0,0,.3)}
+35|.card:hover .play-overlay{opacity:1;transform:translateY(0)}
+36|.play-overlay::after{content:"";width:0;height:0;border-style:solid;border-width:8px 0 8px 14px;border-color:transparent transparent transparent #000;margin-left:3px}
+37|.card .title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+38|.card .artist{font-size:13px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+39|.card .dur{font-size:11px;color:var(--text-sub);margin-top:4px}
+40|
+41|/* Player Bar */
+42|.player-bar{grid-column:1/-1;background:#000;border-top:1px solid #121212;height:80px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:fixed;bottom:0;width:100%;z-index:100}
+43|.cur-track{display:flex;align-items:center;gap:12px;width:25%;min-width:160px}
+44|.cur-track img{width:50px;height:50px;border-radius:4px;object-fit:cover}
+45|.cur-info .t{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+46|.cur-info .a{font-size:11px;color:var(--text-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+47|.controls{width:50%;display:flex;flex-direction:column;align-items:center;gap:6px}
+48|.ctrl-btns{display:flex;align-items:center;gap:20px}
+49|.ctrl{background:none;border:none;color:var(--text-sub);cursor:pointer;font-size:16px;transition:.2s}
+50|.ctrl:hover{color:var(--text-main)}
+51|.ctrl.play-btn{width:30px;height:30px;background:#fff;color:#000;border-radius:50%;font-size:13px;display:flex;align-items:center;justify-content:center}
+52|.ctrl.play-btn:hover{transform:scale(1.06)}
+53|.timeline{display:flex;align-items:center;width:100%;gap:8px;color:var(--text-sub);font-size:11px}
+54|.progress{flex:1;-webkit-appearance:none;appearance:none;background:#4d4d4d;height:4px;border-radius:2px;outline:none;cursor:pointer}
+55|.progress::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;cursor:pointer;opacity:0;transition:.1s}
+56|.progress:hover::-webkit-slider-thumb{opacity:1}
+57|.vol-section{width:25%;display:flex;align-items:center;justify-content:flex-end;gap:8px}
+58|.vol{width:80px;-webkit-appearance:none;background:#4d4d4d;height:4px;border-radius:2px;outline:none;cursor:pointer}
+59|.vol::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:#fff;cursor:pointer}
+60|.yt-player{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px}
+61|
+62|/* Loading */
+63|.loader{display:none;text-align:center;padding:40px;color:var(--text-sub)}
+64|.loader.show{display:block}
+65|.spinner{width:32px;height:32px;border:3px solid #282828;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+66|@keyframes spin{to{transform:rotate(360deg)}}
+67|
+68|/* Responsive */
+69|@media(max-width:768px){
+70|body{grid-template-columns:1fr}
+71|.sidebar{display:none}
+72|.main{padding:16px;padding-bottom:150px}
+73|.search-box{width:100%}
+74|.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+75|.player-bar{flex-direction:column;height:auto;padding:10px 12px;gap:8px}
+76|.cur-track{width:100%;min-width:unset}
+77|.controls{width:100%}
+78|.vol-section{display:none}
+79|.cur-info .t,.cur-info .a{max-width:200px}
+80|}
+81|</style>
+82|</head>
+83|<body>
+84|
+85|<div class="sidebar">
+86|<div class="logo" onclick="filterGenre(\'\')">🎧 <span>Lho Music</span></div>
+87|<div class="nav-group">
+88|<div class="mi active" id="m-home" onclick="filterGenre(\'\')">🏠 Home</div>
+89|<div class="mi" id="m-pop" onclick="filterGenre(\'pop music\')">🎵 Pop Hits</div>
+90|<div class="mi" id="m-rock" onclick="filterGenre(\'rock music\')">🎸 Rock</div>
+91|<div class="mi" id="m-rnb" onclick="filterGenre(\'rnb soul music\')">🎤 R&B / Soul</div>
+92|<div class="mi" id="m-edm" onclick="filterGenre(\'electronic dance music\')">🎧 Electronic</div>
+93|<div class="mi" id="m-jazz" onclick="filterGenre(\'jazz music\')">🎷 Jazz</div>
+94|</div>
+95|<div class="divider"></div>
+96|<div style="font-size:11px;color:var(--text-sub);letter-spacing:1px;font-weight:700">TRENDING</div>
+97|<div class="mi" onclick="filterGenre(\'trending music 2025\')">🔥 Trending Now</div>
+98|<div class="mi" onclick="filterGenre(\'indonesia popular music\')">🇮🇩 Indonesia Hits</div>
+99|<div class="mi" onclick="filterGenre(\'lofi chill beats\')">😴 Lo-Fi Chill</div>
+100|</div>
+101|
+102|<div class="main">
+103|<div class="top-bar">
+104|<input type="text" id="search" class="search-box" placeholder="Apa yang ingin kamu dengarkan?" onkeydown="if(event.key===\'Enter\')doSearch()">
+105|</div>
+106|<h2 id="sec-title">🎵 Trending Musik</h2>
+107|<div class="loader" id="loader"><div class="spinner"></div>Memuat musik...</div>
+108|<div class="grid" id="grid"></div>
+109|</div>
+110|
+111|<div class="player-bar">
+112|<div class="cur-track">
+113|<img id="p-img" src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2250%22 height=%2250%22><rect fill=%22%23181818%22 width=%2250%22 height=%2250%22/><text x=%2225%22 y=%2230%22 fill=%22%23555%22 font-size=%2220%22 text-anchor=%22middle%22>♪</text></svg>" alt="">
+114|<div class="cur-info"><div class="t" id="p-title">Pilih lagu untuk diputar</div><div class="a" id="p-artist">-</div></div>
+115|</div>
+116|<div class="controls">
+117|<div class="ctrl-btns">
+118|<button class="ctrl" onclick="playPrev()" title="Sebelumnya">⏮</button>
+119|<button class="ctrl play-btn" id="play-btn" onclick="togglePlay()">▶</button>
+120|<button class="ctrl" onclick="playNext()" title="Selanjutnya">⏭</button>
+121|</div>
+122|<div class="timeline">
+123|<span id="t-cur">0:00</span>
+124|<input type="range" id="prog" class="progress" value="0" min="0" max="100" step="0.1" oninput="seekTo(this.value)">
+125|<span id="t-tot">0:00</span>
+126|</div>
+127|</div>
+128|<div class="vol-section">
+129|<span style="font-size:14px">🔊</span>
+130|<input type="range" id="vol" class="vol" value="80" min="0" max="100" oninput="setVol(this.value)">
+131|</div>
+132|</div>
+133|
+134|<div id="yt-player" class="yt-player"></div>
+135|
+136|<script>
+137|let tracks=[], curIdx=-1, player=null, YTReady=false, progressTimer=null;
+138|const INV=[
+139|  "https://inv.nadeko.net",
+140|  "https://invidious.fdn.fr",
+141|  "https://vid.puffyan.us",
+142|  "https://yt.artemislena.eu"
+143|];
+144|let invIdx=0;
+145|
+146|function inv(){return INV[invIdx%INV.length]}
+147|
+148|// YouTube IFrame API
+149|var tag=document.createElement("script");
+150|tag.src="https://www.youtube.com/iframe_api";
+151|document.head.appendChild(tag);
+152|
+153|function onYouTubeIframeAPIReady(){
+154|  player=new YT.Player("yt-player",{
+155|    height:"1",width:"1",
+156|    playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,modestbranding:1},
+157|    events:{onReady:()=>{YTReady=true},onStateChange:onStateChange}
+158|  });
+159|}
+160|
+161|function onStateChange(e){
+162|  const btn=document.getElementById("play-btn");
+163|  if(e.data===YT.PlayerState.PLAYING){
+164|    btn.textContent="⏸";
+165|    startProgress();
+166|  }else{
+167|    btn.textContent="▶";
+168|    stopProgress();
+169|  }
+170|  if(e.data===YT.PlayerState.ENDED) playNext();
+171|}
+172|
+173|function togglePlay(){
+174|  if(!player||!YTReady) return;
+175|  const s=player.getPlayerState();
+176|  if(s===YT.PlayerState.PLAYING) player.pauseVideo();
+177|  else player.playVideo();
+178|}
+179|
+180|function setVol(v){if(player&&YTReady) player.setVolume(v)}
+181|
+182|function seekTo(pct){
+183|  if(!player||!YTReady) return;
+184|  const dur=player.getDuration();
+185|  player.seekTo(dur*pct/100,true);
+186|}
+187|
+188|function startProgress(){
+189|  stopProgress();
+190|  progressTimer=setInterval(()=>{
+191|    if(!player||!YTReady) return;
+192|    const cur=player.getCurrentTime()||0;
+193|    dur=player.getDuration()||0;
+194|    document.getElementById("prog").value=dur?cur/dur*100:0;
+195|    document.getElementById("t-cur").textContent=fmt(cur);
+196|    document.getElementById("t-tot").textContent=fmt(dur);
+197|  },500);
+198|}
+199|function stopProgress(){if(progressTimer) clearInterval(progressTimer)}
+200|
+201|function fmt(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return m+":"+(sec<10?"0":"")+sec}
+202|
+203|async function searchYT(q){
+204|  const loader=document.getElementById("loader");
+205|  loader.classList.add("show");
+206|  for(let i=0;i<INV.length;i++){
+207|    try{
+208|      const r=await fetch(inv()+"/api/v1/search?q="+encodeURIComponent(q)+"&type=video&sort_by=relevance", {signal:AbortSignal.timeout(8000)});
+209|      if(!r.ok) throw new Error(r.status);
+210|      const data=await r.json();
+211|      tracks=data.filter(t=>t.videoId&&t.title).slice(0,24).map(t=>({
+212|        id:t.videoId,
+213|        title:t.title,
+214|        artist:t.author||"Unknown",
+215|        thumb:t.videoThumbnails?.find(q=>q.quality==="medium")?.url||"https://i.ytimg.com/vi/"+t.videoId+"/mqdefault.jpg",
+216|        dur:t.lengthSeconds||0
+217|      }));
+218|      renderGrid();
+219|      loader.classList.remove("show");
+220|      return;
+221|    }catch(e){invIdx++}
+222|  }
+223|  loader.classList.remove("show");
+224|  document.getElementById("grid").innerHTML="<p style='color:var(--text-sub);grid-column:1/-1;text-align:center;padding:40px'>Gagal memuat musik. Coba lagi nanti.</p>";
+225|}
+226|
+227|function renderGrid(){
+228|  const g=document.getElementById("grid");
+229|  if(!tracks.length){g.innerHTML="<p style='color:var(--text-sub);grid-column:1/-1;text-align:center;padding:40px'>Tidak ada hasil</p>";return}
+230|  g.innerHTML=tracks.map((t,i)=>`
+231|    <div class="card" onclick="playTrack(${i})">
+232|      <div class="card-img">
+233|        <img src="${t.thumb}" alt="${t.title}" loading="lazy" onerror="this.src='https://i.ytimg.com/vi/${t.id}/mqdefault.jpg'">
+234|        <div class="play-overlay"></div>
+235|      </div>
+236|      <div class="title">${esc(t.title)}</div>
+237|      <div class="artist">${esc(t.artist)}</div>
+238|      <div class="dur">${fmt(t.dur)}</div>
+239|    </div>
+240|  `).join("");
+241|}
+242|
+243|function esc(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML}
+244|
+245|function playTrack(i){
+246|  if(!player||!YTReady||i<0||i>=tracks.length) return;
+247|  curIdx=i;
+248|  const t=tracks[i];
+249|  player.loadVideoById(t.id);
+250|  document.getElementById("p-title").textContent=t.title;
+251|  document.getElementById("p-artist").textContent=t.artist;
+252|  document.getElementById("p-img").src=t.thumb;
+253|  document.title=t.title+" - Lho Music";
+254|}
+255|
+256|function playNext(){if(tracks.length) playTrack((curIdx+1)%tracks.length)}
+257|function playPrev(){if(tracks.length) playTrack((curIdx-1+tracks.length)%tracks.length)}
+258|
+259|function doSearch(){
+260|  const q=document.getElementById("search").value.trim();
+261|  if(!q) return;
+262|  document.getElementById("sec-title").textContent='🔍 Hasil: "'+q+'"';
+263|  clearActive();
+264|  searchYT(q);
+265|}
+266|
+267|let searchTimer;
+268|document.getElementById("search").addEventListener("input",()=>{
+269|  clearTimeout(searchTimer);
+270|  searchTimer=setTimeout(()=>{
+271|    const q=document.getElementById("search").value.trim();
+272|    if(q.length>=3){
+273|      document.getElementById("sec-title").textContent='🔍 Hasil: "'+q+'"';
+274|      clearActive();
+275|      searchYT(q);
+276|    }
+277|  },600);
+278|});
+279|
+280|function filterGenre(g){
+281|  clearActive();
+282|  if(!g){
+283|    document.getElementById("m-home").classList.add("active");
+284|    document.getElementById("sec-title").textContent="🎵 Trending Musik";
+285|    searchYT("trending music popular 2025");
+286|  }else{
+287|    const map={"pop music":"m-pop","rock music":"m-rock","rnb soul music":"m-rnb","electronic dance music":"m-edm","jazz music":"m-jazz"};
+288|    if(map[g]) document.getElementById(map[g]).classList.add("active");
+289|    document.getElementById("sec-title").textContent="🎵 "+g.replace("music","Musik");
+290|    searchYT(g);
+291|  }
+292|}
+293|
+294|function clearActive(){document.querySelectorAll(".mi").forEach(e=>e.classList.remove("active"))}
+295|
+296|// Keyboard shortcuts
+297|document.addEventListener("keydown",e=>{
+298|  if(e.target.tagName==="INPUT") return;
+299|  if(e.code==="Space"){e.preventDefault();togglePlay()}
+300|  if(e.code==="ArrowRight"&&player&&YTReady) player.seekTo(player.getCurrentTime()+5,true);
+301|  if(e.code==="ArrowLeft"&&player&&YTReady) player.seekTo(player.getCurrentTime()-5,true);
+302|});
+303|
+304|// Init
+305|setTimeout(()=>filterGenre(""),500);
+306|</script>
+307|</body>
+308|</html>
