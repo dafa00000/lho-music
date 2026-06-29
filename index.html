@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- v10-glassmorphism -->
+<!-- v11-zoom-download-fix -->
 <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Ai Music","short_name":"Ai","start_url":"./?v=8","display":"standalone","background_color":"%23000","theme_color":"%23FF4D6D","icons":[{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2040%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M48%2060v72a18%2018%200%201%200%2012%2016.6V85.5l72-21v57a18%2018%200%201%200%2012%2016.6V42z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any"},{"src":"data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%22100%22%20fill%3D%22%23000%22%2F%3E%3Cpath%20d%3D%22M128%20160v192a48%2048%200%201%200%2032%2044.3V228l192-56v152a48%2048%200%201%200%2032%2044.3V112z%22%20fill%3D%22%23FF4D6D%22%2F%3E%3C%2Fsvg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any"}]}'>
 <style>
 /* === v10 GLASSMORPHISM REDESIGN === */
@@ -262,6 +262,13 @@ body::after{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;
 }
 .yt-mini-bar button{background:rgba(0,0,0,.7);backdrop-filter:blur(12px);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;pointer-events:auto;flex-shrink:0}
+.yt-mini-wrap{overflow:hidden;position:relative;touch-action:pan-x pan-y;cursor:grab}
+.yt-mini-wrap:active{cursor:grabbing}
+.yt-mini-frame{transition:transform .25s ease;transform-origin:center center;pointer-events:auto}
+.yt-zoom-group{display:flex;gap:3px;pointer-events:auto;flex-shrink:0}
+.yt-zoom-group button,.yt-mini-bar .yt-dl-btn{width:30px;height:30px;font-size:.85rem;font-weight:700}
+.yt-dl-btn.downloaded{color:#4ade80!important}
+.yt-size-info{background:rgba(0,0,0,.7);backdrop-filter:blur(12px);color:rgba(255,255,255,.7);padding:4px 8px;border-radius:8px;font-size:.65rem;font-weight:600;pointer-events:auto;white-space:nowrap}
 
 /* PLAYER BAR — frosted glass */
 .player{
@@ -651,7 +658,7 @@ body::after{
   <div class="topbar">
     <div class="logo">
       <svg viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#000"/><path d="M48 60v72a18 18 0 1 0 12 16.6V85.5l72-21v57a18 18 0 1 0 12 16.6V42z" fill="#FF4D6D"/></svg>
-      <span>Ai Music <small style="font-size:.55rem;color:#4ade80;font-weight:700;margin-left:6px;background:rgba(74,222,128,.1);padding:2px 6px;border-radius:8px">v10</small></span>
+      <span>Ai Music <small style="font-size:.55rem;color:#4ade80;font-weight:700;margin-left:6px;background:rgba(74,222,128,.1);padding:2px 6px;border-radius:8px">v11</small></span>
     </div>
     <div class="search-wrap">
       <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a8 8 0 1 1 5.3-2L21 21.4 19.4 23l-5.7-5.7A8 8 0 0 1 10 18zm0-2a6 6 0 1 0 0-12 6 6 0 0 0 0 12z"/></svg>
@@ -784,7 +791,7 @@ body::after{
       <div class="about-stat"><span class="num" id="statOffline">0</span><span class="lbl">Offline</span></div>
     </div>
 
-    <div class="about-row"><span class="label">Versi</span><span class="value">v10 • 24 Juni 2026</span></div>
+    <div class="about-row"><span class="label">Versi</span><span class="value">v11 • 29 Juni 2026</span></div>
     <div class="about-row"><span class="label">Developer</span><span class="value">YANZYAHA</span></div>
     <div class="about-row"><span class="label">Powered by</span><span class="value">Audius + YouTube</span></div>
     <div class="about-row"><span class="label">Storage</span><span class="value">Single HTML</span></div>
@@ -814,14 +821,49 @@ body::after{
 <div class="yt-mini" id="ytMini">
   <div class="yt-mini-bar">
     <div class="yt-mini-title" id="ytTitle">Playing...</div>
+    <div class="yt-zoom-group">
+      <button id="ytZoomOut" title="Zoom Out">−</button>
+      <span class="yt-size-info" id="ytZoomLevel">100%</span>
+      <button id="ytZoomIn" title="Zoom In">+</button>
+    </div>
+    <button class="yt-dl-btn" id="ytDlBtn" title="Download Video">⬇</button>
+    <button id="ytFullscreen" title="Fullscreen">⛶</button>
     <button id="ytClose" title="Berhenti">✕</button>
   </div>
-  <iframe id="ytFrame" class="yt-mini-frame" allow="autoplay; encrypted-media" playsinline></iframe>
+  <div class="yt-mini-wrap" id="ytWrap">
+    <iframe id="ytFrame" class="yt-mini-frame" allow="autoplay; encrypted-media; fullscreen" playsinline></iframe>
+  </div>
+</div>
+<!-- Download Modal -->
+<div class="modal-bg" id="dlModal">
+  <div class="modal" style="max-width:440px">
+    <h3>⬇️ Download Video</h3>
+    <p id="dlModalTitle" style="font-weight:600;color:#fff;margin-bottom:6px">YouTube Video</p>
+    <p style="margin-bottom:10px">Pilih service download. Semua support video panjang (1-5+ jam).</p>
+    <input id="dlModalUrl" readonly style="margin-bottom:14px;font-size:12px;opacity:.8" />
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <button class="btn btn-primary" onclick="openDlService('cobalt')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+        🟢 Cobalt.tools <span style="opacity:.7;font-size:.7rem">(Recommended • Supports 5+ jam)</span>
+      </button>
+      <button class="btn btn-ghost" onclick="openDlService('ssyoutube')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+        🔵 SSYouTube <span style="opacity:.7;font-size:.7rem">(Fast • MP3/MP4)</span>
+      </button>
+      <button class="btn btn-ghost" onclick="openDlService('y2mate')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+        🟡 Y2Mate <span style="opacity:.7;font-size:.7rem">(Classic • Many formats)</span>
+      </button>
+      <button class="btn btn-ghost" onclick="openDlService('copy')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+        📋 Copy URL <span style="opacity:.7;font-size:.7rem">(Paste di app lain)</span>
+      </button>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="$('dlModal').classList.remove('show')">Tutup</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
+<audio id="audio" preload="metadata"></audio>
 
 <script>
 // Global error capture — show fatal errors as toast (don't fail silently)
@@ -908,7 +950,14 @@ function getYouTubeId(url) {
   return null;
 }
 
+let ytZoomScale = 1;
+let currentYtId = null, currentYtTitle = '';
 function playYouTube(id, title) {
+  currentYtId = id;
+  currentYtTitle = title || 'YouTube';
+  ytZoomScale = 1;
+  $('ytFrame').style.transform = '';
+  if ($('ytZoomLevel')) $('ytZoomLevel').textContent = '100%';
   $('ytFrame').src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&modestbranding=1&rel=0&playsinline=1`;
   $('ytTitle').textContent = title || 'YouTube';
   $('ytMini').classList.add('show');
@@ -931,7 +980,70 @@ $('ytClose').onclick = () => {
   $('heroEyebrow').textContent = 'Pilih lagu untuk mulai';
   $('heroTitle').textContent = 'Belum ada yang diputar';
   $('heroArtist').textContent = 'Search atau paste YouTube URL 🎵';
+  ytZoomScale = 1; currentYtId = null; currentYtTitle = '';
+  $('ytFrame').style.transform = '';
+  if ($('ytZoomLevel')) $('ytZoomLevel').textContent = '100%';
 };
+
+/* ===== YouTube Zoom Controls ===== */
+const YT_ZOOM_MIN = 0.5, YT_ZOOM_MAX = 3, YT_ZOOM_STEP = 0.25;
+function ytSetZoom(s) {
+  ytZoomScale = Math.max(YT_ZOOM_MIN, Math.min(YT_ZOOM_MAX, s));
+  $('ytFrame').style.transform = 'scale(' + ytZoomScale + ')';
+  if ($('ytZoomLevel')) $('ytZoomLevel').textContent = Math.round(ytZoomScale * 100) + '%';
+}
+if ($('ytZoomIn')) $('ytZoomIn').onclick = () => ytSetZoom(ytZoomScale + YT_ZOOM_STEP);
+if ($('ytZoomOut')) $('ytZoomOut').onclick = () => ytSetZoom(ytZoomScale - YT_ZOOM_STEP);
+if ($('ytZoomLevel')) $('ytZoomLevel').onclick = () => ytSetZoom(1);
+
+// Pinch-to-zoom on YouTube container
+(function() {
+  const wrap = document.getElementById('ytWrap');
+  if (!wrap) return;
+  let startDist = 0, startScale = 1;
+  function getDist(e) {
+    const t = e.touches; if (t.length < 2) return 0;
+    const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) { e.preventDefault(); startDist = getDist(e); startScale = ytZoomScale; }
+  }, { passive: false });
+  wrap.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) { e.preventDefault(); const dist = getDist(e); if (startDist > 0) ytSetZoom(startScale * (dist / startDist)); }
+  }, { passive: false });
+  wrap.addEventListener('wheel', e => { e.preventDefault(); ytSetZoom(ytZoomScale + (e.deltaY < 0 ? YT_ZOOM_STEP : -YT_ZOOM_STEP)); }, { passive: false });
+})();
+
+// Fullscreen
+if ($('ytFullscreen')) $('ytFullscreen').onclick = () => {
+  const frame = $('ytFrame');
+  if (frame.requestFullscreen) frame.requestFullscreen();
+  else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+};
+
+/* ===== YouTube Download ===== */
+function downloadYouTube(videoId, title) {
+  const url = 'https://www.youtube.com/watch?v=' + videoId;
+  $('dlModalTitle').textContent = title || 'YouTube Video';
+  $('dlModalUrl').value = url;
+  $('dlModal').classList.add('show');
+}
+function openDlService(service) {
+  const url = $('dlModalUrl').value;
+  const videoId = currentYtId;
+  if (service === 'cobalt') { window.open('https://cobalt.tools/', '_blank'); toast('📋 Paste URL di cobalt.tools (Ctrl+V)'); }
+  else if (service === 'ssyoutube') { window.open('https://ssyoutube.com/watch?v=' + videoId, '_blank'); }
+  else if (service === 'y2mate') { window.open('https://www.y2mate.com/youtube/' + videoId, '_blank'); }
+  else if (service === 'copy') {
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('✓ URL copied!')).catch(() => { $('dlModalUrl').select(); document.execCommand('copy'); toast('✓ URL copied!'); });
+    else { $('dlModalUrl').select(); document.execCommand('copy'); toast('✓ URL copied!'); }
+    return;
+  }
+  $('dlModal').classList.remove('show');
+}
+if ($('ytDlBtn')) $('ytDlBtn').onclick = () => { if (currentYtId) downloadYouTube(currentYtId, currentYtTitle); };
+$('dlModal').onclick = e => { if (e.target === $('dlModal')) $('dlModal').classList.remove('show'); };
 
 async function doSearch() {
   const q = $('q').value.trim();
@@ -943,7 +1055,10 @@ async function doSearch() {
     const tracks = await audiusSearch(q);
     currentList = tracks;
     if (tracks.length) renderList(tracks);
-    else $('content').innerHTML = '<div class="empty"><h3>Tidak ada di Audius</h3><small>Untuk lagu mainstream original, paste URL YouTube (klik icon 📋)</small></div>';
+    else {
+      const ytSearchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q + ' official audio');
+      $('content').innerHTML = '<div class="empty"><h3>Tidak ada di Audius</h3><small>Lagu mainstream mungkin cuma ada di YouTube</small><br><br><a href="' + ytSearchUrl + '" target="_blank" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;margin:8px 4px">🔍 Cari di YouTube</a> <button class="btn btn-ghost" onclick="document.querySelector(\'[data-tab=home]\').click()" style="margin:8px 4px">🏠 Kembali Home</button></div>';
+    }
   } catch (e) {
     $('content').innerHTML = '<div class="empty"><h3>Error</h3><p>' + esc(e.message) + '</p></div>';
   }
@@ -1897,7 +2012,7 @@ if ('serviceWorker' in navigator) {
       if (url.hostname.includes('audius') || url.hostname.includes('youtube')) return; // don't cache streams
       e.respondWith(fetch(e.request).then(res => {
         const clone = res.clone();
-        caches.open('aimusic-v100').then(c => c.put(e.request, clone));
+        caches.open('aimusic-v110').then(c => c.put(e.request, clone));
         return res;
       }).catch(() => caches.match(e.request)));
     });
@@ -1919,13 +2034,13 @@ updateDlCount();
 
 // Version banner — shows once per session
 (function showVersionBanner(){
-  const KEY = 'aimusic_vbanner_100';
+  const KEY = 'aimusic_vbanner_110';
   if (sessionStorage.getItem(KEY)) return;
   sessionStorage.setItem(KEY, '1');
   setTimeout(() => {
     const b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#4ade80,#22c55e);color:#000;padding:12px 22px;border-radius:14px;font-weight:700;font-size:.85rem;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideDown .4s ease';
-    b.innerHTML = '✨ v10 — Glassmorphism UI + Bug fixes (play/download/home cards)!';
+    b.innerHTML = '✨ v11 — Audio fix + YouTube zoom/download + Search YouTube!';
     document.body.appendChild(b);
     setTimeout(() => { b.style.opacity = '0'; b.style.transition = 'opacity .3s'; setTimeout(() => b.remove(), 300); }, 3500);
   }, 800);
